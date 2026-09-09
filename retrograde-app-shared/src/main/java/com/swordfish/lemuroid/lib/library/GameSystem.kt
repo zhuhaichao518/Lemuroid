@@ -891,6 +891,7 @@ data class GameSystem(
                             scanByUniqueExtension = false,
                             scanByPathAndFilename = true,
                             scanByPathAndSupportedExtensions = false,
+                            pathAliases = listOf("cps1", "cps2", "neogeo"),
                         ),
                 ),
                 GameSystem(
@@ -1330,6 +1331,7 @@ data class GameSystem(
             val scanByPathAndFilename: Boolean = false,
             val scanByPathAndSupportedExtensions: Boolean = true,
             val scanBySimilarSerial: Boolean = false,
+            val pathAliases: List<String> = emptyList(),
         )
     }
 }

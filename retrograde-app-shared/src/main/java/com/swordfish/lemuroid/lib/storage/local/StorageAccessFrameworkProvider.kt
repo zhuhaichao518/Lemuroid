@@ -11,6 +11,7 @@ import com.swordfish.lemuroid.common.kotlin.writeToFile
 import com.swordfish.lemuroid.lib.R
 import com.swordfish.lemuroid.lib.library.db.entity.DataFile
 import com.swordfish.lemuroid.lib.library.db.entity.Game
+import com.swordfish.lemuroid.lib.library.SystemID
 import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
 import com.swordfish.lemuroid.lib.storage.BaseStorageFile
 import com.swordfish.lemuroid.lib.storage.RomFiles
@@ -148,8 +149,33 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
         originalDocument: DocumentFile,
     ): RomFiles {
         val gameEntry = getGameRomStandard(game, originalDocument)
+        stageFbNeoBios(game, originalDocument, gameEntry)
         val dataEntries = dataFiles.map { getDataFileStandard(game, it) }
         return RomFiles.Standard(listOf(gameEntry) + dataEntries)
+    }
+
+    private fun stageFbNeoBios(
+        game: Game,
+        originalDocument: DocumentFile,
+        gameEntry: File,
+    ) {
+        if (game.systemId != SystemID.FBNEO.dbname || game.fileName.equals(FBNEO_BIOS_NAME, true)) return
+
+        runCatching {
+            val documentId = DocumentsContract.getDocumentId(originalDocument.uri)
+            val parentDocumentId = documentId.substringBeforeLast('/', "")
+            if (parentDocumentId.isEmpty()) return
+
+            val biosDocumentId = "$parentDocumentId/$FBNEO_BIOS_NAME"
+            val biosUri = DocumentsContract.buildDocumentUriUsingTree(originalDocument.uri, biosDocumentId)
+            val biosDocument = DocumentFile.fromSingleUri(context, biosUri) ?: return
+            if (!biosDocument.exists() || !biosDocument.isFile) return
+
+            val biosCacheFile = File(gameEntry.parentFile, FBNEO_BIOS_NAME)
+            context.contentResolver.openInputStream(biosDocument.uri)?.writeToFile(biosCacheFile)
+        }.onFailure {
+            Timber.w(it, "Unable to stage FBNeo BIOS next to ${game.fileName}")
+        }
     }
 
     private fun getGameRomFilesZipped(
@@ -235,5 +261,6 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
     companion object {
         const val SAF_CACHE_SUBFOLDER = "storage-framework-games"
         const val VIRTUAL_FILE_PATH = "/virtual/file/path"
+        const val FBNEO_BIOS_NAME = "neogeo.zip"
     }
 }

@@ -31,10 +31,10 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
 
         val metadata =
             runCatching {
-                findByCRC(storageFile, db)
+                findByPathAndFilename(db, storageFile)
+                    ?: findByCRC(storageFile, db)
                     ?: findBySerial(storageFile, db)
                     ?: findByFilename(db, storageFile)
-                    ?: findByPathAndFilename(db, storageFile)
                     ?: findByUniqueExtension(storageFile)
                     ?: findByKnownSystem(storageFile)
                     ?: findByPathAndSupportedExtension(storageFile)
@@ -72,10 +72,15 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
         db: LibretroDatabase,
         file: StorageFile,
     ): GameMetadata? {
-        return db.gameDao().findByFileName(file.name)
-            .filterNullable { extractGameSystem(it).scanOptions.scanByPathAndFilename }
-            .filterNullable { parentContainsSystem(file.path, extractGameSystem(it).id.dbname) }
-            ?.let { convertToGameMetadata(it) }
+        for (system in GameSystem.all()) {
+            if (!system.scanOptions.scanByPathAndFilename) continue
+            val pathNames = listOf(system.id.dbname) + system.scanOptions.pathAliases
+            if (pathNames.none { parentContainsSystem(file.path, it) }) continue
+
+            val rom = db.gameDao().findByFileNameAndSystem(file.name, system.id.dbname) ?: continue
+            return convertToGameMetadata(rom)
+        }
+        return null
     }
 
     private fun findByPathAndSupportedExtension(file: StorageFile): GameMetadata? {

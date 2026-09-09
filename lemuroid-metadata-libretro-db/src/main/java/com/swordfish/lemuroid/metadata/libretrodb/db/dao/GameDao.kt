@@ -12,6 +12,12 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE romName = :romName LIMIT 1")
     suspend fun findByFileName(romName: String): LibretroRom?
 
+    @Query("SELECT * FROM games WHERE romName = :romName AND system = :system LIMIT 1")
+    suspend fun findByFileNameAndSystem(
+        romName: String,
+        system: String,
+    ): LibretroRom?
+
     @Query("SELECT * FROM games WHERE crc32 = :crc LIMIT 1")
     suspend fun findByCRC(crc: String): LibretroRom?
 

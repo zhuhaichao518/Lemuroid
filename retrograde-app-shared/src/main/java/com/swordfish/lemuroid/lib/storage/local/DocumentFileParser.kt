@@ -3,10 +3,12 @@ package com.swordfish.lemuroid.lib.storage.local
 import android.content.Context
 import com.swordfish.lemuroid.common.kotlin.calculateCrc32
 import com.swordfish.lemuroid.common.kotlin.toStringCRC32
+import com.swordfish.lemuroid.lib.library.GameSystem
 import com.swordfish.lemuroid.lib.storage.BaseStorageFile
 import com.swordfish.lemuroid.lib.storage.StorageFile
 import com.swordfish.lemuroid.lib.storage.scanner.SerialScanner
 import timber.log.Timber
+import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
@@ -38,12 +40,36 @@ object DocumentFileParser {
             if (gameEntry != null) {
                 Timber.d("Handing zip file as compressed game: ${baseStorageFile.name}")
                 parseCompressedGame(baseStorageFile, gameEntry, it)
+            } else if (isPathIdentifiedArchive(baseStorageFile)) {
+                Timber.d("Handling path-identified archive without CRC: ${baseStorageFile.name}")
+                parsePathIdentifiedArchive(baseStorageFile)
             } else {
                 Timber.d("Handing zip file as standard: ${baseStorageFile.name}")
                 parseStandardFile(context, baseStorageFile)
             }
         }
     }
+
+    private fun isPathIdentifiedArchive(file: BaseStorageFile): Boolean {
+        val normalizedPath = file.path?.lowercase(Locale.US) ?: return false
+        return GameSystem.all()
+            .filter { it.scanOptions.scanByPathAndFilename }
+            .any { system ->
+                val pathNames = listOf(system.id.dbname) + system.scanOptions.pathAliases
+                pathNames.any { normalizedPath.contains(it) }
+            }
+    }
+
+    private fun parsePathIdentifiedArchive(baseStorageFile: BaseStorageFile) =
+        StorageFile(
+            baseStorageFile.name,
+            baseStorageFile.size,
+            null,
+            null,
+            baseStorageFile.uri,
+            baseStorageFile.path,
+            null,
+        )
 
     private fun parseCompressedGame(
         baseStorageFile: BaseStorageFile,
