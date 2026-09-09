@@ -49,6 +49,14 @@
     <string name="settings_gamepad_category_general">General</string>
     <string name="settings_gamepad_title_reset_bindings">Reset bindings</string>
     <string name="settings_gamepad_title_game_menu">Menu</string>
+    <string name="settings_gamepad_nes_category">NES / FC face buttons (tap a row to switch A/B)</string>
+    <string name="settings_gamepad_general_bindings_category">General bindings</string>
+    <string name="settings_gamepad_physical_button">%1$s / %2$s</string>
+    <string name="settings_gamepad_nes_mapping">Maps to %1$s · Turbo switch</string>
+    <string name="settings_gamepad_position_top">Top</string>
+    <string name="settings_gamepad_position_right">Right</string>
+    <string name="settings_gamepad_position_left">Left</string>
+    <string name="settings_gamepad_position_bottom">Bottom</string>
 
     <string name="settings_title_open_cores_selection">Change Cores</string>
     <string name="settings_description_open_cores_selection">Select which core is associated to a system</string>

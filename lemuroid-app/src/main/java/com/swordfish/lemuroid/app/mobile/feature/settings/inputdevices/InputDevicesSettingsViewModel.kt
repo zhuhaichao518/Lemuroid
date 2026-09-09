@@ -5,6 +5,7 @@ import android.view.InputDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.swordfish.lemuroid.app.shared.input.GamePadButtonBinding
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.input.InputKey
 import com.swordfish.lemuroid.app.shared.input.RetroKey
@@ -39,6 +40,7 @@ class InputDevicesSettingsViewModel(
 
     data class BindingsView(
         val keys: Map<RetroKey, InputKey> = emptyMap(),
+        val nesKeys: Map<InputKey, GamePadButtonBinding> = emptyMap(),
         val shortcuts: List<GameShortcut> = emptyList(),
     )
 
@@ -54,6 +56,16 @@ class InputDevicesSettingsViewModel(
     fun resetAllBindings() {
         viewModelScope.launch {
             inputDeviceManager.resetAllBindings()
+        }
+    }
+
+    fun updateNesBinding(
+        device: InputDevice,
+        inputKey: InputKey,
+        binding: GamePadButtonBinding,
+    ) {
+        viewModelScope.launch {
+            inputDeviceManager.updateNesBinding(device, inputKey, binding)
         }
     }
 
@@ -82,9 +94,15 @@ class InputDevicesSettingsViewModel(
     private fun getDevicesBindingViews(): Flow<Map<InputDevice, BindingsView>> {
         val devicesFlow = inputDeviceManager.getEnabledInputsObservable()
         val bindingsFlow = inputDeviceManager.getInputBindingsObservable()
+        val nesBindingsFlow = inputDeviceManager.getNesInputBindingsObservable()
         val shortcutsFlow = inputDeviceManager.getGameShortcutsObservable()
 
-        return combine(devicesFlow, bindingsFlow, shortcutsFlow) { devices, allBindings, allShortcuts ->
+        return combine(
+            devicesFlow,
+            bindingsFlow,
+            nesBindingsFlow,
+            shortcutsFlow,
+        ) { devices, allBindings, allNesBindings, allShortcuts ->
             devices.associateWith { device ->
                 val shortcuts =
                     allShortcuts[device]?.filter {
@@ -92,7 +110,7 @@ class InputDevicesSettingsViewModel(
                     } ?: emptyList()
                 val keys = allBindings(device).reverseLookup()
 
-                BindingsView(keys, shortcuts)
+                BindingsView(keys, allNesBindings(device), shortcuts)
             }
         }
     }

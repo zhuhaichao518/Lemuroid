@@ -43,6 +43,14 @@
     <string name="settings_gamepad_category_general">常规</string>
     <string name="settings_gamepad_title_reset_bindings">重置绑定</string>
     <string name="settings_gamepad_title_game_menu">菜单</string>
+    <string name="settings_gamepad_nes_category">FC 四键（点按一行切换 A/B）</string>
+    <string name="settings_gamepad_general_bindings_category">其他主机通用绑定</string>
+    <string name="settings_gamepad_physical_button">%1$s / %2$s 键</string>
+    <string name="settings_gamepad_nes_mapping">映射到 %1$s · 右侧开关为连发</string>
+    <string name="settings_gamepad_position_top">上</string>
+    <string name="settings_gamepad_position_right">右</string>
+    <string name="settings_gamepad_position_left">左</string>
+    <string name="settings_gamepad_position_bottom">下</string>
     <string name="settings_title_open_cores_selection">更改核心</string>
     <string name="settings_description_open_cores_selection">选择与系统关联的核心</string>
     <string name="settings_core_selection_ds_info">Dersmume 已被弃用，不久将被删除。 在游戏中保存，然后切换至熔化后自动保存游戏中的负载，但保存状态保持在创建游戏的核心上。</string>

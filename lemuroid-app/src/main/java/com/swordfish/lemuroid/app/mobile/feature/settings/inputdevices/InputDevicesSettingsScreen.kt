@@ -5,17 +5,24 @@ import android.content.Intent
 import android.view.InputDevice
 import android.view.KeyEvent
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.mobile.feature.input.GamePadBindingActivity
 import com.swordfish.lemuroid.app.mobile.feature.input.GamePadShortcutBindingActivity
+import com.swordfish.lemuroid.app.shared.input.GamePadButtonBinding
 import com.swordfish.lemuroid.app.shared.input.InputBindingUpdater
+import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.input.InputKey
+import com.swordfish.lemuroid.app.shared.input.RetroKey
 import com.swordfish.lemuroid.app.shared.input.ShortcutBindingUpdater
 import com.swordfish.lemuroid.app.shared.input.lemuroiddevice.getLemuroidInputDevice
 import com.swordfish.lemuroid.app.shared.settings.GameShortcut
@@ -38,7 +45,7 @@ fun InputDevicesSettingsScreen(
     LemuroidSettingsPage(modifier = modifier.fillMaxSize()) {
         EnabledDeviceCategory(state)
         state.bindings.forEach { (device, bindings) ->
-            DeviceBindingCategory(device, bindings)
+            DeviceBindingCategory(device, bindings, viewModel)
         }
         GeneralOptionsCategory(viewModel)
     }
@@ -48,11 +55,16 @@ fun InputDevicesSettingsScreen(
 private fun DeviceBindingCategory(
     device: InputDevice,
     bindings: InputDevicesSettingsViewModel.BindingsView,
+    viewModel: InputDevicesSettingsViewModel,
 ) {
     val context = LocalContext.current
     val customizableKeys = device.getLemuroidInputDevice().getCustomizableKeys()
 
     LemuroidCardSettingsGroup(title = { Text(text = device.name) }) {
+        BindingSectionTitle(stringResource(R.string.settings_gamepad_nes_category))
+        NesButtonBindings(device, bindings.nesKeys, viewModel)
+
+        BindingSectionTitle(stringResource(R.string.settings_gamepad_general_bindings_category))
         customizableKeys.forEach { retroKey ->
             val inputKey = bindings.keys[retroKey] ?: InputKey(KeyEvent.KEYCODE_UNKNOWN)
 
@@ -73,6 +85,74 @@ private fun DeviceBindingCategory(
         bindings.shortcuts.forEach {
             DeviceShortcutBinding(context, device, it)
         }
+    }
+}
+
+@Composable
+private fun BindingSectionTitle(text: String) {
+    Text(
+        text = text,
+        modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 4.dp),
+        color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.labelLarge,
+    )
+}
+
+@Composable
+private fun NesButtonBindings(
+    device: InputDevice,
+    bindings: Map<InputKey, GamePadButtonBinding>,
+    viewModel: InputDevicesSettingsViewModel,
+) {
+    val context = LocalContext.current
+    val buttons =
+        listOf(
+            InputKey(KeyEvent.KEYCODE_BUTTON_Y) to R.string.settings_gamepad_position_top,
+            InputKey(KeyEvent.KEYCODE_BUTTON_B) to R.string.settings_gamepad_position_right,
+            InputKey(KeyEvent.KEYCODE_BUTTON_X) to R.string.settings_gamepad_position_left,
+            InputKey(KeyEvent.KEYCODE_BUTTON_A) to R.string.settings_gamepad_position_bottom,
+        )
+
+    buttons.forEach { (inputKey, positionRes) ->
+        val binding = bindings[inputKey] ?: InputDeviceManager.getDefaultNesBindings().getValue(inputKey)
+        val targetName = InputKey(binding.retroKey.keyCode).displayName()
+
+        LemuroidSettingsMenuLink(
+            title = {
+                Text(
+                    text =
+                        stringResource(
+                            R.string.settings_gamepad_physical_button,
+                            stringResource(positionRes),
+                            inputKey.displayName(),
+                        ),
+                )
+            },
+            subtitle = {
+                Text(text = stringResource(R.string.settings_gamepad_nes_mapping, targetName))
+            },
+            action = {
+                Switch(
+                    checked = binding.turbo,
+                    onCheckedChange = { enabled ->
+                        viewModel.updateNesBinding(device, inputKey, binding.copy(turbo = enabled))
+                    },
+                )
+            },
+            onClick = {
+                val nextKeyCode =
+                    if (binding.retroKey.keyCode == KeyEvent.KEYCODE_BUTTON_A) {
+                        KeyEvent.KEYCODE_BUTTON_B
+                    } else {
+                        KeyEvent.KEYCODE_BUTTON_A
+                    }
+                viewModel.updateNesBinding(
+                    device,
+                    inputKey,
+                    binding.copy(retroKey = RetroKey(nextKeyCode)),
+                )
+            },
+        )
     }
 }
 

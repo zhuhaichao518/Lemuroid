@@ -9,6 +9,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.shared.input.GamePadButtonBinding
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.input.InputKey
 import com.swordfish.lemuroid.app.shared.input.inputclass.getInputClass
@@ -17,13 +18,14 @@ import com.swordfish.lemuroid.app.shared.settings.GameShortcutType
 import com.swordfish.lemuroid.common.coroutines.launchOnState
 import com.swordfish.lemuroid.common.coroutines.safeCollect
 import com.swordfish.lemuroid.common.kotlin.NTuple2
-import com.swordfish.lemuroid.common.kotlin.NTuple4
+import com.swordfish.lemuroid.common.kotlin.NTuple5
 import com.swordfish.lemuroid.common.kotlin.filterNotNullValues
 import com.swordfish.lemuroid.common.kotlin.toIndexedMap
 import com.swordfish.lemuroid.common.kotlin.zipOnKeys
 import com.swordfish.lemuroid.lib.controller.ControllerConfig
 import com.swordfish.lemuroid.lib.library.GameSystem
 import com.swordfish.lemuroid.lib.library.SystemCoreConfig
+import com.swordfish.lemuroid.lib.library.SystemID
 import com.swordfish.libretrodroid.Controller
 import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_ANALOG_LEFT
@@ -31,6 +33,8 @@ import com.swordfish.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_ANALOG_RI
 import com.swordfish.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_DPAD
 import com.swordfish.touchinput.radial.sensors.TiltConfiguration
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +47,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlin.math.abs
@@ -60,9 +65,21 @@ class GameViewModelInput(
 ) : DefaultLifecycleObserver {
     private data class SingleAxisEvent(val axis: Int, val action: Int, val keyCode: Int, val port: Int)
 
+    private data class GamePadSource(val deviceId: Int, val keyCode: Int)
+
+    private data class GamePadOutput(val port: Int, val keyCode: Int)
+
+    private data class ActiveGamePadBinding(val output: GamePadOutput, val turbo: Boolean)
+
     private val controllerConfigsState = MutableStateFlow<Map<Int, ControllerConfig>>(mapOf())
     private val keyEventsFlow: MutableSharedFlow<KeyEvent?> = MutableSharedFlow()
     private val motionEventsFlow: MutableSharedFlow<MotionEvent> = MutableSharedFlow()
+    private val activeNesGamePadBindings = mutableMapOf<GamePadSource, ActiveGamePadBinding>()
+    private val normalNesGamePadSources = mutableMapOf<GamePadOutput, MutableSet<GamePadSource>>()
+    private val turboNesGamePadSources = mutableMapOf<GamePadOutput, MutableSet<GamePadSource>>()
+    private val turboNesGamePadPulses = mutableSetOf<GamePadOutput>()
+    private val emittedNesGamePadOutputs = mutableSetOf<GamePadOutput>()
+    private val turboNesGamePadJobs = mutableMapOf<GamePadOutput, Job>()
 
     fun getAllTiltConfigurations(): List<TiltConfiguration> {
         return controllerConfigsState.value[0]
@@ -293,14 +310,21 @@ class GameViewModelInput(
                 inputDeviceManager.getGameShortcutsObservable(),
                 inputDeviceManager.getGamePadsPortMapperObservable(),
                 inputDeviceManager.getInputBindingsObservable(),
+                inputDeviceManager.getNesInputBindingsObservable(),
                 filteredKeyEvents,
-                ::NTuple4,
+                ::NTuple5,
             )
 
         combinedObservable
-            .onStart { pressedKeys.clear() }
-            .onCompletion { pressedKeys.clear() }
-            .safeCollect { (shortcuts, ports, bindings, event) ->
+            .onStart {
+                pressedKeys.clear()
+                releaseAllNesGamePadButtons()
+            }
+            .onCompletion {
+                pressedKeys.clear()
+                releaseAllNesGamePadButtons()
+            }
+            .safeCollect { (shortcuts, ports, bindings, nesBindings, event) ->
                 val (device, action, keyCode) = event
                 val port = ports(device)
                 val bindKeyCode = bindings(device)[InputKey(keyCode)]?.keyCode ?: keyCode
@@ -331,9 +355,115 @@ class GameViewModelInput(
                 }
 
                 port?.let {
-                    retroGameView.retroGameView?.sendKeyEvent(action, bindKeyCode, it)
+                    val nesBinding =
+                        if (system.id == SystemID.NES) {
+                            nesBindings(device)[InputKey(keyCode)]
+                        } else {
+                            null
+                        }
+                    if (nesBinding != null) {
+                        handleNesGamePadButton(device, action, keyCode, nesBinding, it)
+                    } else {
+                        retroGameView.retroGameView?.sendKeyEvent(action, bindKeyCode, it)
+                    }
                 }
             }
+    }
+
+    private fun handleNesGamePadButton(
+        device: InputDevice,
+        action: Int,
+        keyCode: Int,
+        binding: GamePadButtonBinding,
+        port: Int,
+    ) {
+        val source = GamePadSource(device.id, keyCode)
+        removeNesGamePadSource(source)
+
+        if (action != KeyEvent.ACTION_DOWN) return
+
+        val activeBinding = ActiveGamePadBinding(GamePadOutput(port, binding.retroKey.keyCode), binding.turbo)
+        activeNesGamePadBindings[source] = activeBinding
+        val sources =
+            if (binding.turbo) {
+                turboNesGamePadSources.getOrPut(activeBinding.output, ::mutableSetOf)
+            } else {
+                normalNesGamePadSources.getOrPut(activeBinding.output, ::mutableSetOf)
+            }
+        sources += source
+
+        if (binding.turbo) {
+            startNesGamePadTurbo(activeBinding.output)
+        } else {
+            emitNesGamePadOutputIfChanged(activeBinding.output)
+        }
+    }
+
+    private fun removeNesGamePadSource(source: GamePadSource) {
+        val binding = activeNesGamePadBindings.remove(source) ?: return
+        val sourceMap = if (binding.turbo) turboNesGamePadSources else normalNesGamePadSources
+        val sources = sourceMap[binding.output] ?: return
+        sources -= source
+        if (sources.isEmpty()) {
+            sourceMap -= binding.output
+            if (binding.turbo) {
+                turboNesGamePadJobs.remove(binding.output)?.cancel()
+                turboNesGamePadPulses -= binding.output
+            }
+        }
+        emitNesGamePadOutputIfChanged(binding.output)
+    }
+
+    private fun startNesGamePadTurbo(output: GamePadOutput) {
+        if (turboNesGamePadJobs[output] != null) return
+
+        turboNesGamePadJobs[output] =
+            scope.launch {
+                try {
+                    while (isActive && turboNesGamePadSources[output]?.isNotEmpty() == true) {
+                        turboNesGamePadPulses += output
+                        emitNesGamePadOutputIfChanged(output)
+                        delay(NES_GAME_PAD_TURBO_HALF_PERIOD_MILLIS)
+                        turboNesGamePadPulses -= output
+                        emitNesGamePadOutputIfChanged(output)
+                        delay(NES_GAME_PAD_TURBO_HALF_PERIOD_MILLIS)
+                    }
+                } finally {
+                    turboNesGamePadPulses -= output
+                    emitNesGamePadOutputIfChanged(output)
+                }
+            }
+    }
+
+    private fun emitNesGamePadOutputIfChanged(output: GamePadOutput) {
+        val pressed =
+            normalNesGamePadSources[output]?.isNotEmpty() == true ||
+                output in turboNesGamePadPulses
+        if ((output in emittedNesGamePadOutputs) == pressed) return
+
+        if (pressed) {
+            emittedNesGamePadOutputs += output
+        } else {
+            emittedNesGamePadOutputs -= output
+        }
+        retroGameView.retroGameView?.sendKeyEvent(
+            if (pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP,
+            output.keyCode,
+            output.port,
+        )
+    }
+
+    private fun releaseAllNesGamePadButtons() {
+        turboNesGamePadJobs.values.forEach { it.cancel() }
+        turboNesGamePadJobs.clear()
+        activeNesGamePadBindings.clear()
+        normalNesGamePadSources.clear()
+        turboNesGamePadSources.clear()
+        turboNesGamePadPulses.clear()
+        emittedNesGamePadOutputs.toList().forEach { output ->
+            retroGameView.retroGameView?.sendKeyEvent(KeyEvent.ACTION_UP, output.keyCode, output.port)
+        }
+        emittedNesGamePadOutputs.clear()
     }
 
     private suspend fun initializeVirtualGamePadMotionsFlow() {
@@ -394,5 +524,9 @@ class GameViewModelInput(
         } catch (e: Exception) {
             Timber.e(e)
         }
+    }
+
+    companion object {
+        private const val NES_GAME_PAD_TURBO_HALF_PERIOD_MILLIS = 42L
     }
 }

@@ -47,6 +47,18 @@ class InputDeviceManager(
             .map { bindings -> { bindings[it] ?: mapOf() } }
     }
 
+    fun getNesInputBindingsObservable(): Flow<(InputDevice?) -> Map<InputKey, GamePadButtonBinding>> {
+        return getEnabledInputsObservable()
+            .flatMapLatest { devices ->
+                if (devices.isEmpty()) {
+                    return@flatMapLatest flowOf(emptyMap())
+                }
+                val flows = devices.map { device -> getNesBindingsFlow(device).map { device to it } }
+                combine(flows) { it.toMap() }
+            }
+            .map { bindings -> { bindings[it] ?: getDefaultNesBindings() } }
+    }
+
     fun getGameShortcutsObservable(): Flow<Map<InputDevice, List<GameShortcut>>> {
         return getEnabledInputsObservable()
             .flatMapLatest { devices ->
@@ -69,6 +81,13 @@ class InputDeviceManager(
         return flowSharedPreferences.getString(computeKeyBindingGamePadPreference(inputDevice))
             .asFlow()
             .map { parseBindingsPreference(it, inputDevice) }
+            .flowOn(Dispatchers.IO)
+    }
+
+    private fun getNesBindingsFlow(inputDevice: InputDevice): Flow<Map<InputKey, GamePadButtonBinding>> {
+        return flowSharedPreferences.getString(computeNesKeyBindingGamePadPreference(inputDevice))
+            .asFlow()
+            .map(::parseNesBindingsPreference)
             .flowOn(Dispatchers.IO)
     }
 
@@ -111,6 +130,17 @@ class InputDeviceManager(
         }
     }
 
+    suspend fun getCurrentNesBindings(inputDevice: InputDevice): Map<InputKey, GamePadButtonBinding> {
+        return withContext(Dispatchers.IO) {
+            val preference =
+                sharedPreferences.getString(
+                    computeNesKeyBindingGamePadPreference(inputDevice),
+                    "",
+                )
+            parseNesBindingsPreference(preference)
+        }
+    }
+
     suspend fun getCurrentShortcuts(inputDevice: InputDevice): List<GameShortcut> {
         return withContext(Dispatchers.IO) {
             GameShortcutType.entries.mapNotNull { type ->
@@ -133,6 +163,16 @@ class InputDeviceManager(
         return decoded.getOrDefault(defaultBindings)
     }
 
+    private fun parseNesBindingsPreference(preference: String?): Map<InputKey, GamePadButtonBinding> {
+        val defaultBindings = getDefaultNesBindings()
+        if (preference.isNullOrEmpty()) {
+            return defaultBindings
+        }
+
+        val decoded = runCatching { Json.decodeFromString(nesBindingsMapSerializer, preference) }
+        return decoded.getOrDefault(defaultBindings)
+    }
+
     suspend fun updateBinding(
         inputDevice: InputDevice,
         retroKey: RetroKey,
@@ -149,6 +189,19 @@ class InputDeviceManager(
 
         sharedPreferences.edit(commit = true) {
             putString(computeKeyBindingGamePadPreference(inputDevice), sharedPreferencesContent)
+        }
+    }
+
+    suspend fun updateNesBinding(
+        inputDevice: InputDevice,
+        inputKey: InputKey,
+        binding: GamePadButtonBinding,
+    ) = withContext(Dispatchers.IO) {
+        val bindings = getCurrentNesBindings(inputDevice) + (inputKey to binding)
+        val content = Json.encodeToString(nesBindingsMapSerializer, bindings)
+
+        sharedPreferences.edit(commit = true) {
+            putString(computeNesKeyBindingGamePadPreference(inputDevice), content)
         }
     }
 
@@ -248,6 +301,7 @@ class InputDeviceManager(
         private const val GAME_PAD_ENABLED_PREFERENCE_BASE_KEY = "pref_key_gamepad_enabled"
 
         private val bindingsMapSerializer = MapSerializer(InputKey.serializer(), RetroKey.serializer())
+        private val nesBindingsMapSerializer = MapSerializer(InputKey.serializer(), GamePadButtonBinding.serializer())
         private val bindingsComboSerializer = PairSerializer(InputKey.serializer(), InputKey.serializer())
 
         private fun getSharedPreferencesId(inputDevice: InputDevice) = inputDevice.descriptor
@@ -269,6 +323,22 @@ class InputDeviceManager(
 
         fun computeKeyBindingGamePadPreference(inputDevice: InputDevice) =
             "${GAME_PAD_BINDING_PREFERENCE_BASE_KEY}_${getSharedPreferencesId(inputDevice)}"
+
+        fun computeNesKeyBindingGamePadPreference(inputDevice: InputDevice) =
+            "${GAME_PAD_BINDING_PREFERENCE_BASE_KEY}_${getSharedPreferencesId(inputDevice)}_nes"
+
+        fun getDefaultNesBindings(): Map<InputKey, GamePadButtonBinding> {
+            return mapOf(
+                InputKey(KeyEvent.KEYCODE_BUTTON_Y) to
+                    GamePadButtonBinding(RetroKey(KeyEvent.KEYCODE_BUTTON_B), turbo = true),
+                InputKey(KeyEvent.KEYCODE_BUTTON_B) to
+                    GamePadButtonBinding(RetroKey(KeyEvent.KEYCODE_BUTTON_A), turbo = true),
+                InputKey(KeyEvent.KEYCODE_BUTTON_X) to
+                    GamePadButtonBinding(RetroKey(KeyEvent.KEYCODE_BUTTON_B)),
+                InputKey(KeyEvent.KEYCODE_BUTTON_A) to
+                    GamePadButtonBinding(RetroKey(KeyEvent.KEYCODE_BUTTON_A)),
+            )
+        }
 
         fun computeKeyBindingRetroKeyPreference(
             inputDevice: InputDevice,
