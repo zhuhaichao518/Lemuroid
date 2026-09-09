@@ -43,16 +43,30 @@ fun PadKitScope.NESRight(
         settings = settings,
         modifier = modifier,
         primaryDial = {
+            // PadKit lays face buttons clockwise starting at the right edge. This order
+            // produces the familiar Xbox diamond: B right, A bottom, X left, Y top.
             LemuroidControlFaceButtons(
                 ids =
                     persistentListOf(
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_A),
                         Id.Key(KeyEvent.KEYCODE_BUTTON_B),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_A),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y),
                     ),
                 idsForegrounds =
                     persistentMapOf<Id.Key, @Composable (State<Boolean>) -> Unit>(
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_A) to { LemuroidButtonForeground(pressed = it, label = "A") },
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_B) to { LemuroidButtonForeground(pressed = it, label = "B") },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_A) to {
+                            LemuroidButtonForeground(pressed = it, label = settings.faceButtonAAction.shortLabel())
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_B) to {
+                            LemuroidButtonForeground(pressed = it, label = settings.faceButtonBAction.shortLabel())
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X) to {
+                            LemuroidButtonForeground(pressed = it, label = settings.faceButtonXAction.shortLabel())
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y) to {
+                            LemuroidButtonForeground(pressed = it, label = settings.faceButtonYAction.shortLabel())
+                        },
                     ),
             )
         },
@@ -61,4 +75,13 @@ fun PadKitScope.NESRight(
             SecondaryButtonMenu(settings)
         },
     )
+}
+
+private fun TouchControllerSettingsManager.FaceButtonAction.shortLabel(): String {
+    return when (this) {
+        TouchControllerSettingsManager.FaceButtonAction.TURBO_A -> "A连"
+        TouchControllerSettingsManager.FaceButtonAction.TURBO_B -> "B连"
+        TouchControllerSettingsManager.FaceButtonAction.NORMAL_A -> "A"
+        TouchControllerSettingsManager.FaceButtonAction.NORMAL_B -> "B"
+    }
 }

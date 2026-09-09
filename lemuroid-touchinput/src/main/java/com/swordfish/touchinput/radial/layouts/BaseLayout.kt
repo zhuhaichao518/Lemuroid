@@ -1,6 +1,7 @@
 package com.swordfish.touchinput.radial.layouts
 
 import androidx.compose.foundation.layout.absolutePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -33,6 +34,10 @@ fun BaseLayoutLeft(
     LayoutRadial(
         modifier =
             modifier
+                .offset(
+                    x = TouchControllerSettingsManager.MAX_POSITION_OFFSET_DP.dp * settings.leftOffsetX,
+                    y = TouchControllerSettingsManager.MAX_POSITION_OFFSET_DP.dp * settings.leftOffsetY,
+                )
                 .absolutePadding(
                     left = TouchControllerSettingsManager.MAX_MARGINS.dp * settings.marginX,
                     bottom = TouchControllerSettingsManager.MAX_MARGINS.dp * settings.marginY,
@@ -56,6 +61,10 @@ fun BaseLayoutRight(
     LayoutRadial(
         modifier =
             modifier
+                .offset(
+                    x = TouchControllerSettingsManager.MAX_POSITION_OFFSET_DP.dp * settings.rightOffsetX,
+                    y = TouchControllerSettingsManager.MAX_POSITION_OFFSET_DP.dp * settings.rightOffsetY,
+                )
                 .absolutePadding(
                     right = TouchControllerSettingsManager.MAX_MARGINS.dp * settings.marginX,
                     bottom = TouchControllerSettingsManager.MAX_MARGINS.dp * settings.marginY,

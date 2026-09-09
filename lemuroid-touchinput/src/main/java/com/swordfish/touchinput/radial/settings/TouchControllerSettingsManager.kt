@@ -24,11 +24,29 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
     }
 
     @Serializable
+    enum class FaceButtonAction {
+        TURBO_A,
+        TURBO_B,
+        NORMAL_A,
+        NORMAL_B,
+    }
+
+    @Serializable
     data class Settings(
         val scale: Float = DEFAULT_SCALE,
         val rotation: Float = DEFAULT_ROTATION,
         val marginX: Float = DEFAULT_MARGIN_X,
         val marginY: Float = DEFAULT_MARGIN_Y,
+        val leftOffsetX: Float = DEFAULT_POSITION_OFFSET,
+        val leftOffsetY: Float = DEFAULT_POSITION_OFFSET,
+        val rightOffsetX: Float = DEFAULT_POSITION_OFFSET,
+        val rightOffsetY: Float = DEFAULT_POSITION_OFFSET,
+        val faceButtonAAction: FaceButtonAction = FaceButtonAction.TURBO_A,
+        val faceButtonBAction: FaceButtonAction = FaceButtonAction.TURBO_B,
+        val faceButtonXAction: FaceButtonAction = FaceButtonAction.NORMAL_A,
+        val faceButtonYAction: FaceButtonAction = FaceButtonAction.NORMAL_B,
+        val slideLatchEnabled: Boolean = true,
+        val turboRateHz: Float = DEFAULT_TURBO_RATE_HZ,
     )
 
     private fun computeInsetsPaddings(
@@ -123,12 +141,17 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         const val DEFAULT_ROTATION = 0.0f
         const val DEFAULT_MARGIN_X = 0.0f
         const val DEFAULT_MARGIN_Y = 0.0f
+        const val DEFAULT_POSITION_OFFSET = 0.0f
+        const val DEFAULT_TURBO_RATE_HZ = 12.0f
 
         const val MAX_ROTATION = 45f
         const val MIN_SCALE = 0.75f
         const val MAX_SCALE = 1.5f
 
         const val MAX_MARGINS = 96f
+        const val MAX_POSITION_OFFSET_DP = 120f
+        const val MIN_TURBO_RATE_HZ = 5f
+        const val MAX_TURBO_RATE_HZ = 20f
     }
 
     private fun getPreferenceString(

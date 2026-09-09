@@ -3,4 +3,25 @@
     <string name="touch_customize_button_done">Done</string>
     <string name="touch_customize_button_reset">Reset</string>
     <string name="touch_customize_info">Drag and Pinch controls to change position and size</string>
+    <string name="touch_customize_title">Touch controls</string>
+    <string name="touch_customize_section_general">Size and rotation</string>
+    <string name="touch_customize_scale">Control size</string>
+    <string name="touch_customize_rotate">Secondary button rotation</string>
+    <string name="touch_customize_section_position">Control positions</string>
+    <string name="touch_customize_dpad_horizontal">D-pad horizontal position</string>
+    <string name="touch_customize_dpad_vertical">D-pad vertical position</string>
+    <string name="touch_customize_buttons_horizontal">Action buttons horizontal position</string>
+    <string name="touch_customize_buttons_vertical">Action buttons vertical position</string>
+    <string name="touch_customize_section_nes_mapping">NES button mapping</string>
+    <string name="touch_customize_button_a_position">A button (bottom)</string>
+    <string name="touch_customize_button_b_position">B button (right)</string>
+    <string name="touch_customize_button_x_position">X button (left)</string>
+    <string name="touch_customize_button_y_position">Y button (top)</string>
+    <string name="touch_customize_action_turbo_a">Turbo A</string>
+    <string name="touch_customize_action_turbo_b">Turbo B</string>
+    <string name="touch_customize_action_normal_a">Normal A</string>
+    <string name="touch_customize_action_normal_b">Normal B</string>
+    <string name="touch_customize_slide_latch">Slide-to-switch mode</string>
+    <string name="touch_customize_slide_latch_summary">Keep the first button held while sliding to another; release all when the finger lifts.</string>
+    <string name="touch_customize_turbo_rate">Turbo rate: %1$d presses/sec</string>
 </resources>

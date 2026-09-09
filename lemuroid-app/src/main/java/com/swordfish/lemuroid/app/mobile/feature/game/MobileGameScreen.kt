@@ -11,19 +11,27 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.RotateLeft
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,12 +65,14 @@ import com.swordfish.touchinput.controller.R
 import com.swordfish.touchinput.radial.LemuroidPadTheme
 import com.swordfish.touchinput.radial.LocalLemuroidPadTheme
 import com.swordfish.touchinput.radial.sensors.TiltConfiguration
+import com.swordfish.touchinput.radial.settings.TouchControllerID
 import com.swordfish.touchinput.radial.settings.TouchControllerSettingsManager
 import com.swordfish.touchinput.radial.ui.GlassSurface
 import com.swordfish.touchinput.radial.ui.LemuroidButtonPressFeedback
 import gg.padkit.PadKit
 import gg.padkit.config.HapticFeedbackType
 import gg.padkit.inputstate.InputState
+import kotlin.math.roundToInt
 
 @Composable
 fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
@@ -269,6 +279,7 @@ private fun MenuEditTouchControls(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .heightIn(max = 640.dp)
                     .wrapContentHeight(),
         ) {
             Column(
@@ -276,10 +287,17 @@ private fun MenuEditTouchControls(
                     Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                MenuEditTouchControlRow(Icons.Default.OpenInFull, "Scale", 0f) {
+                Text(text = stringResource(R.string.touch_customize_title))
+                Text(text = stringResource(R.string.touch_customize_section_general))
+                MenuEditTouchControlRow(
+                    Icons.Default.OpenInFull,
+                    stringResource(R.string.touch_customize_scale),
+                    0f,
+                ) {
                     Slider(
                         value = touchControllerSettings.scale,
                         onValueChange = {
@@ -289,28 +307,12 @@ private fun MenuEditTouchControls(
                         },
                     )
                 }
-                MenuEditTouchControlRow(Icons.Default.Height, "Horizontal Margin", 90f) {
-                    Slider(
-                        value = touchControllerSettings.marginX,
-                        onValueChange = {
-                            viewModel.updateTouchControllerSettings(
-                                touchControllerSettings.copy(marginX = it),
-                            )
-                        },
-                    )
-                }
-                MenuEditTouchControlRow(Icons.Default.Height, "Vertical Margin", 0f) {
-                    Slider(
-                        value = touchControllerSettings.marginY,
-                        onValueChange = {
-                            viewModel.updateTouchControllerSettings(
-                                touchControllerSettings.copy(marginY = it),
-                            )
-                        },
-                    )
-                }
                 if (controllerConfig.allowTouchRotation) {
-                    MenuEditTouchControlRow(Icons.Default.RotateLeft, "Rotate", 0f) {
+                    MenuEditTouchControlRow(
+                        Icons.Default.RotateLeft,
+                        stringResource(R.string.touch_customize_rotate),
+                        0f,
+                    ) {
                         Slider(
                             value = touchControllerSettings.rotation,
                             onValueChange = {
@@ -321,6 +323,16 @@ private fun MenuEditTouchControls(
                         )
                     }
                 }
+
+                HorizontalDivider()
+                Text(text = stringResource(R.string.touch_customize_section_position))
+                PositionSliders(viewModel, touchControllerSettings)
+
+                if (controllerConfig.touchControllerID == TouchControllerID.NES) {
+                    HorizontalDivider()
+                    NESButtonSettings(viewModel, touchControllerSettings)
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -344,6 +356,160 @@ private fun MenuEditTouchControls(
 }
 
 @Composable
+private fun PositionSliders(
+    viewModel: BaseGameScreenViewModel,
+    settings: TouchControllerSettingsManager.Settings,
+) {
+    MenuEditTouchControlRow(
+        Icons.Default.Height,
+        stringResource(R.string.touch_customize_dpad_horizontal),
+        90f,
+    ) {
+        Slider(
+            value = settings.leftOffsetX,
+            valueRange = -1f..1f,
+            onValueChange = { viewModel.updateTouchControllerSettings(settings.copy(leftOffsetX = it)) },
+        )
+    }
+    MenuEditTouchControlRow(
+        Icons.Default.Height,
+        stringResource(R.string.touch_customize_dpad_vertical),
+        0f,
+    ) {
+        Slider(
+            value = settings.leftOffsetY,
+            valueRange = -1f..1f,
+            onValueChange = { viewModel.updateTouchControllerSettings(settings.copy(leftOffsetY = it)) },
+        )
+    }
+    MenuEditTouchControlRow(
+        Icons.Default.Height,
+        stringResource(R.string.touch_customize_buttons_horizontal),
+        90f,
+    ) {
+        Slider(
+            value = settings.rightOffsetX,
+            valueRange = -1f..1f,
+            onValueChange = { viewModel.updateTouchControllerSettings(settings.copy(rightOffsetX = it)) },
+        )
+    }
+    MenuEditTouchControlRow(
+        Icons.Default.Height,
+        stringResource(R.string.touch_customize_buttons_vertical),
+        0f,
+    ) {
+        Slider(
+            value = settings.rightOffsetY,
+            valueRange = -1f..1f,
+            onValueChange = { viewModel.updateTouchControllerSettings(settings.copy(rightOffsetY = it)) },
+        )
+    }
+}
+
+@Composable
+private fun NESButtonSettings(
+    viewModel: BaseGameScreenViewModel,
+    settings: TouchControllerSettingsManager.Settings,
+) {
+    Text(text = stringResource(R.string.touch_customize_section_nes_mapping))
+    NESButtonMappingRow(
+        stringResource(R.string.touch_customize_button_a_position),
+        settings.faceButtonAAction,
+    ) { viewModel.updateTouchControllerSettings(settings.copy(faceButtonAAction = it)) }
+    NESButtonMappingRow(
+        stringResource(R.string.touch_customize_button_b_position),
+        settings.faceButtonBAction,
+    ) { viewModel.updateTouchControllerSettings(settings.copy(faceButtonBAction = it)) }
+    NESButtonMappingRow(
+        stringResource(R.string.touch_customize_button_x_position),
+        settings.faceButtonXAction,
+    ) { viewModel.updateTouchControllerSettings(settings.copy(faceButtonXAction = it)) }
+    NESButtonMappingRow(
+        stringResource(R.string.touch_customize_button_y_position),
+        settings.faceButtonYAction,
+    ) { viewModel.updateTouchControllerSettings(settings.copy(faceButtonYAction = it)) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = stringResource(R.string.touch_customize_slide_latch))
+            Text(text = stringResource(R.string.touch_customize_slide_latch_summary))
+        }
+        Switch(
+            checked = settings.slideLatchEnabled,
+            onCheckedChange = {
+                viewModel.updateTouchControllerSettings(settings.copy(slideLatchEnabled = it))
+            },
+        )
+    }
+
+    MenuEditTouchControlRow(
+        Icons.Default.OpenInFull,
+        stringResource(R.string.touch_customize_turbo_rate, settings.turboRateHz.roundToInt()),
+        0f,
+    ) {
+        Slider(
+            value = settings.turboRateHz,
+            valueRange =
+                TouchControllerSettingsManager.MIN_TURBO_RATE_HZ..
+                    TouchControllerSettingsManager.MAX_TURBO_RATE_HZ,
+            steps = 14,
+            onValueChange = { viewModel.updateTouchControllerSettings(settings.copy(turboRateHz = it)) },
+        )
+    }
+}
+
+@Composable
+private fun NESButtonMappingRow(
+    buttonLabel: String,
+    action: TouchControllerSettingsManager.FaceButtonAction,
+    onActionSelected: (TouchControllerSettingsManager.FaceButtonAction) -> Unit,
+) {
+    val expanded = remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = buttonLabel)
+        Box {
+            OutlinedButton(onClick = { expanded.value = true }) {
+                Text(text = faceButtonActionLabel(action))
+            }
+            DropdownMenu(
+                expanded = expanded.value,
+                onDismissRequest = { expanded.value = false },
+            ) {
+                TouchControllerSettingsManager.FaceButtonAction.entries.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(faceButtonActionLabel(option)) },
+                        onClick = {
+                            expanded.value = false
+                            onActionSelected(option)
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun faceButtonActionLabel(action: TouchControllerSettingsManager.FaceButtonAction): String {
+    return stringResource(
+        when (action) {
+            TouchControllerSettingsManager.FaceButtonAction.TURBO_A -> R.string.touch_customize_action_turbo_a
+            TouchControllerSettingsManager.FaceButtonAction.TURBO_B -> R.string.touch_customize_action_turbo_b
+            TouchControllerSettingsManager.FaceButtonAction.NORMAL_A -> R.string.touch_customize_action_normal_a
+            TouchControllerSettingsManager.FaceButtonAction.NORMAL_B -> R.string.touch_customize_action_normal_b
+        },
+    )
+}
+
+@Composable
 private fun MenuEditTouchControlRow(
     icon: ImageVector,
     label: String,
@@ -360,6 +526,9 @@ private fun MenuEditTouchControlRow(
             imageVector = icon,
             contentDescription = label,
         )
-        slider()
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = label)
+            slider()
+        }
     }
 }

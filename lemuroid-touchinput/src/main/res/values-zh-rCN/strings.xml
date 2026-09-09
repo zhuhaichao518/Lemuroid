@@ -3,4 +3,25 @@
     <string name="touch_customize_button_done">完成</string>
     <string name="touch_customize_button_reset">复位</string>
     <string name="touch_customize_info">拖动和缩放来改变按键位置和大小</string>
+    <string name="touch_customize_title">触控按键设置</string>
+    <string name="touch_customize_section_general">大小与旋转</string>
+    <string name="touch_customize_scale">按键大小</string>
+    <string name="touch_customize_rotate">辅助按键旋转</string>
+    <string name="touch_customize_section_position">按键位置</string>
+    <string name="touch_customize_dpad_horizontal">方向键：左右位置</string>
+    <string name="touch_customize_dpad_vertical">方向键：上下位置</string>
+    <string name="touch_customize_buttons_horizontal">动作键：左右位置</string>
+    <string name="touch_customize_buttons_vertical">动作键：上下位置</string>
+    <string name="touch_customize_section_nes_mapping">FC 按键映射</string>
+    <string name="touch_customize_button_a_position">A 键（下）</string>
+    <string name="touch_customize_button_b_position">B 键（右）</string>
+    <string name="touch_customize_button_x_position">X 键（左）</string>
+    <string name="touch_customize_button_y_position">Y 键（上）</string>
+    <string name="touch_customize_action_turbo_a">连发 A</string>
+    <string name="touch_customize_action_turbo_b">连发 B</string>
+    <string name="touch_customize_action_normal_a">普通 A</string>
+    <string name="touch_customize_action_normal_b">普通 B</string>
+    <string name="touch_customize_slide_latch">滑动切键模式</string>
+    <string name="touch_customize_slide_latch_summary">滑到另一键时保留原键，抬起手指后一起松开。</string>
+    <string name="touch_customize_turbo_rate">连发速度：每秒 %1$d 次</string>
 </resources>
