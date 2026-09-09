@@ -22,6 +22,6 @@
     <string name="touch_customize_action_normal_a">普通 A</string>
     <string name="touch_customize_action_normal_b">普通 B</string>
     <string name="touch_customize_slide_latch">滑动切键模式</string>
-    <string name="touch_customize_slide_latch_summary">滑到另一键时保留原键，抬起手指后一起松开。</string>
+    <string name="touch_customize_slide_latch_summary">只锁定最先按下的键；滑过的其他键离开区域即松开，首键在抬手时松开。</string>
     <string name="touch_customize_turbo_rate">连发速度：每秒 %1$d 次</string>
 </resources>

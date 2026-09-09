@@ -54,7 +54,7 @@ class GameViewModelTouchControls(
 
     private var activeTouchSettings = TouchControllerSettingsManager.Settings()
     private val pressedFaceButtons = mutableSetOf<Int>()
-    private val latchedFaceButtons = mutableSetOf<Int>()
+    private var firstFaceButton: Int? = null
     private val normalFaceKeys = mutableSetOf<Int>()
     private val turboFaceKeys = mutableSetOf<Int>()
     private val turboPulseKeys = mutableSetOf<Int>()
@@ -90,7 +90,7 @@ class GameViewModelTouchControls(
             }
             .onEach { settings ->
                 activeTouchSettings = settings
-                if (!settings.slideLatchEnabled) latchedFaceButtons.clear()
+                if (!settings.slideLatchEnabled) firstFaceButton = null
                 refreshFaceButtonOutput()
             }
     }
@@ -169,12 +169,14 @@ class GameViewModelTouchControls(
     }
 
     private fun handleNESFaceButtonEvents(events: List<InputEvent.Button>) {
-        val buttonsBeforeEvent = pressedFaceButtons.toSet()
-        val newlyPressed = events.filter { it.pressed }.mapTo(mutableSetOf()) { it.id }
-        val newlyReleased = events.filterNot { it.pressed }.mapTo(mutableSetOf()) { it.id }
-
-        if (activeTouchSettings.slideLatchEnabled && newlyPressed.isNotEmpty() && buttonsBeforeEvent.isNotEmpty()) {
-            latchedFaceButtons.addAll(buttonsBeforeEvent)
+        if (
+            activeTouchSettings.slideLatchEnabled &&
+            pressedFaceButtons.isEmpty() &&
+            firstFaceButton == null
+        ) {
+            // Only the first face button touched in this gesture is latched. Buttons
+            // encountered later follow the finger normally and release when it leaves.
+            firstFaceButton = events.firstOrNull { it.pressed }?.id
         }
 
         events.forEach { event ->
@@ -185,22 +187,8 @@ class GameViewModelTouchControls(
             }
         }
 
-        if (activeTouchSettings.slideLatchEnabled) {
-            // PadKit may report a direct A -> B transition in one event batch, or pass
-            // through an A+B composite region first. Cover both paths so the original
-            // button remains held until the finger leaves the whole face-button control.
-            if (newlyPressed.isNotEmpty() && newlyReleased.isNotEmpty()) {
-                latchedFaceButtons.addAll(newlyReleased)
-            }
-            if (pressedFaceButtons.size > 1) {
-                latchedFaceButtons.addAll(pressedFaceButtons)
-            }
-        } else {
-            latchedFaceButtons.clear()
-        }
-
         if (pressedFaceButtons.isEmpty()) {
-            latchedFaceButtons.clear()
+            firstFaceButton = null
         }
 
         refreshFaceButtonOutput()
@@ -209,7 +197,12 @@ class GameViewModelTouchControls(
     private fun refreshFaceButtonOutput() {
         if (touchControlId.value != TouchControllerID.NES) return
 
-        val effectiveButtons = pressedFaceButtons + latchedFaceButtons
+        val effectiveButtons =
+            if (activeTouchSettings.slideLatchEnabled) {
+                pressedFaceButtons + listOfNotNull(firstFaceButton)
+            } else {
+                pressedFaceButtons
+            }
         val requestedNormalKeys = mutableSetOf<Int>()
         val requestedTurboKeys = mutableSetOf<Int>()
 
@@ -300,7 +293,7 @@ class GameViewModelTouchControls(
         turboJobs.values.forEach { it.cancel() }
         turboJobs.clear()
         pressedFaceButtons.clear()
-        latchedFaceButtons.clear()
+        firstFaceButton = null
         normalFaceKeys.clear()
         turboFaceKeys.clear()
         turboPulseKeys.clear()

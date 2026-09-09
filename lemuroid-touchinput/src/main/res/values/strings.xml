@@ -22,6 +22,6 @@
     <string name="touch_customize_action_normal_a">Normal A</string>
     <string name="touch_customize_action_normal_b">Normal B</string>
     <string name="touch_customize_slide_latch">Slide-to-switch mode</string>
-    <string name="touch_customize_slide_latch_summary">Keep the first button held while sliding to another; release all when the finger lifts.</string>
+    <string name="touch_customize_slide_latch_summary">Latch only the first button. Other buttons release when the finger leaves their area; the first releases when the finger lifts.</string>
     <string name="touch_customize_turbo_rate">Turbo rate: %1$d presses/sec</string>
 </resources>
