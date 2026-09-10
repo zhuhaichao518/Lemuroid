@@ -1,0 +1,188 @@
+{
+  "application_commit": "6afca895760f9406d8839ff239b31f4ff3fd888a",
+  "core_binary_submodule": "fee2e824525daa22bcf318f96127fe43fa8a15ad",
+  "apk_sha256": "9c3d4c4e2d3d9931aadd8f00d7304fd16262017905fadad4585c84a32f26a9c4",
+  "audit_status": "incomplete_do_not_publish",
+  "cores": [
+    {
+      "id": "citra",
+      "repository": "libretro/citra",
+      "runtime_version_arm64": "5263fae33-dirty",
+      "ref": "5263fae33",
+      "source_commit": "5263fae3344e5e9af43036e0e38bec2d10fb2407",
+      "status": "unresolved_dirty_build",
+      "license_review_complete": false
+    },
+    {
+      "id": "desmume",
+      "repository": "libretro/desmume",
+      "runtime_version_arm64": "git 7f05a8d4",
+      "ref": "7f05a8d4",
+      "source_commit": "7f05a8d447b00acd9e0798aee97b4f72eb505ef9",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "dosbox_pure",
+      "repository": "schellingb/dosbox-pure",
+      "runtime_version_arm64": "1.0-preview3",
+      "ref": "1.0-preview3",
+      "source_commit": "d743cfd9342c083ef6d3cecfc08c9af28a1481c8",
+      "status": "candidate_tag_only",
+      "license_review_complete": false
+    },
+    {
+      "id": "fbneo",
+      "repository": "libretro/FBNeo",
+      "runtime_version_arm64": "v1.0.0.03  56ab07bab",
+      "ref": "56ab07bab",
+      "source_commit": "56ab07bab7ba385d49e7da3324f68fc597a51e49",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "fceumm",
+      "repository": "libretro/libretro-fceumm",
+      "runtime_version_arm64": "(SVN) 5cd4a43",
+      "ref": "5cd4a43",
+      "source_commit": "5cd4a43e16a7f3cd35628d481c347a0a98cfdfa2",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "gambatte",
+      "repository": "libretro/gambatte-libretro",
+      "runtime_version_arm64": "v0.5.0-netlink b752252",
+      "ref": "b752252",
+      "source_commit": "b75225203ffea8b65124bb31acb598e91e7f22d9",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "genesis_plus_gx",
+      "repository": "libretro/Genesis-Plus-GX",
+      "runtime_version_arm64": "v1.7.4 cecccacf",
+      "ref": "cecccacf",
+      "source_commit": "cecccacf767b1c8e86af3e315223b052a7f81b95",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "handy",
+      "repository": "libretro/libretro-handy",
+      "runtime_version_arm64": "0.97 fca2392",
+      "ref": "fca2392",
+      "source_commit": "fca239207e9c111da3e85d2faf0b1b9d7524e498",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "mame2003_plus",
+      "repository": "libretro/mame2003-plus-libretro",
+      "runtime_version_arm64": " 870e8ba3",
+      "ref": "870e8ba3",
+      "source_commit": "870e8ba3fa4e6635e2eb9d85c939589498659c32",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "mednafen_ngp",
+      "repository": "libretro/beetle-ngp-libretro",
+      "runtime_version_arm64": "v1.29.0.0 139fe34",
+      "ref": "139fe34",
+      "source_commit": "139fe34c8dfc5585d6ee1793a7902bca79d544de",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "mednafen_pce_fast",
+      "repository": "libretro/beetle-pce-fast-libretro",
+      "runtime_version_arm64": "v1.31.0.0 d5c2b28",
+      "ref": "d5c2b28",
+      "source_commit": "d5c2b28ee6931ae43a4a79455937693ae8ccc8a1",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "mednafen_wswan",
+      "repository": "libretro/beetle-wswan-libretro",
+      "runtime_version_arm64": "v0.9.35.1",
+      "ref": null,
+      "source_commit": null,
+      "status": "unresolved_version_only",
+      "license_review_complete": false
+    },
+    {
+      "id": "melonds",
+      "repository": "JesseTG/melonds-ds",
+      "runtime_version_arm64": "1.2.0",
+      "ref": "1.2.0",
+      "source_commit": "33c48260402865ef77667487528efd5ca7ce1233",
+      "status": "candidate_tag_only",
+      "license_review_complete": false
+    },
+    {
+      "id": "mgba",
+      "repository": "libretro/mgba",
+      "runtime_version_arm64": "0.11-dev c758314a6",
+      "ref": "c758314a6",
+      "source_commit": "c758314a639aa0066e7b65a8341448181b73c804",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "mupen64plus_next_gles3",
+      "repository": "libretro/mupen64plus-libretro-nx",
+      "runtime_version_arm64": "2.8-Vulkan 222acbd",
+      "ref": "222acbd",
+      "source_commit": "222acbd3f98391458a047874d0372fe78e14fe94",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "pcsx_rearmed",
+      "repository": "libretro/pcsx_rearmed",
+      "runtime_version_arm64": "r25 228c14e1",
+      "ref": "228c14e1",
+      "source_commit": "228c14e10e9a8fae0ead8adf30daad2cdd8655b9",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "ppsspp",
+      "repository": "hrydgard/ppsspp",
+      "runtime_version_arm64": "v1.19.3-987-geab2cc85bc",
+      "ref": "eab2cc85bc",
+      "source_commit": "eab2cc85bca530d47873c2015457cfa754a0115d",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "prosystem",
+      "repository": "libretro/prosystem-libretro",
+      "runtime_version_arm64": "1.3e acae250",
+      "ref": "acae250",
+      "source_commit": "acae250da8d98b8b9707cd499e2a0bf6d8500652",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "snes9x",
+      "repository": "libretro/snes9x",
+      "runtime_version_arm64": "1.63 5a40cd55",
+      "ref": "5a40cd55",
+      "source_commit": "5a40cd5514e63e691e39141d64267798357a1424",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    },
+    {
+      "id": "stella",
+      "repository": "libretro/stella2023",
+      "runtime_version_arm64": "8.0_pre 749a21f65",
+      "ref": "749a21f65",
+      "source_commit": "749a21f653cf85fcedf4fe514ac8df1ad308be8e",
+      "status": "embedded_revision_resolved",
+      "license_review_complete": false
+    }
+  ]
+}
