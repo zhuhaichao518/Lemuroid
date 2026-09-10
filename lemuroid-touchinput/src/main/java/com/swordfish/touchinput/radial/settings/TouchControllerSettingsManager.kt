@@ -27,8 +27,16 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
     enum class FaceButtonAction {
         TURBO_A,
         TURBO_B,
+        TURBO_X,
+        TURBO_Y,
+        TURBO_L1,
+        TURBO_R1,
         NORMAL_A,
         NORMAL_B,
+        NORMAL_X,
+        NORMAL_Y,
+        NORMAL_L1,
+        NORMAL_R1,
     }
 
     @Serializable
@@ -46,6 +54,13 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         val faceButtonXAction: FaceButtonAction = FaceButtonAction.NORMAL_B,
         val faceButtonYAction: FaceButtonAction = FaceButtonAction.TURBO_B,
         val slideLatchEnabled: Boolean = true,
+        val arcadeButtonAAction: FaceButtonAction = FaceButtonAction.NORMAL_A,
+        val arcadeButtonBAction: FaceButtonAction = FaceButtonAction.NORMAL_B,
+        val arcadeButtonXAction: FaceButtonAction = FaceButtonAction.NORMAL_X,
+        val arcadeButtonYAction: FaceButtonAction = FaceButtonAction.NORMAL_Y,
+        val arcadeButtonL1Action: FaceButtonAction = FaceButtonAction.NORMAL_L1,
+        val arcadeButtonR1Action: FaceButtonAction = FaceButtonAction.NORMAL_R1,
+        val arcadeSlideLatchEnabled: Boolean = false,
         val turboRateHz: Float = DEFAULT_TURBO_RATE_HZ,
     )
 

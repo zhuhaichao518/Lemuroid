@@ -121,6 +121,12 @@ data class GameSystem(
                         ),
                     ),
                     uniqueExtensions = listOf("nes"),
+                    scanOptions =
+                        ScanOptions(
+                            scanByPathAndSupportedExtensions = true,
+                            pathAliases = listOf("fc"),
+                        ),
+                    supportedExtensions = listOf("nes", "zip"),
                 ),
                 GameSystem(
                     SystemID.SNES,

@@ -55,10 +55,18 @@ fun PadKitScope.Arcade4Right(
                     ),
                 idsForegrounds =
                     persistentMapOf<Id.Key, @Composable (State<Boolean>) -> Unit>(
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_A) to { LemuroidButtonForeground(pressed = it) },
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_B) to { LemuroidButtonForeground(pressed = it) },
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y) to { LemuroidButtonForeground(pressed = it) },
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_X) to { LemuroidButtonForeground(pressed = it) },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_A) to {
+                            LemuroidButtonForeground(pressed = it, label = settings.arcadeButtonAAction.shortLabel())
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_B) to {
+                            LemuroidButtonForeground(pressed = it, label = settings.arcadeButtonBAction.shortLabel())
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y) to {
+                            LemuroidButtonForeground(pressed = it, label = settings.arcadeButtonYAction.shortLabel())
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X) to {
+                            LemuroidButtonForeground(pressed = it, label = settings.arcadeButtonXAction.shortLabel())
+                        },
                     ),
             )
         },

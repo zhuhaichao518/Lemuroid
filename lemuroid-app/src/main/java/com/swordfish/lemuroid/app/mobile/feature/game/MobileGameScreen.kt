@@ -328,9 +328,24 @@ private fun MenuEditTouchControls(
                 Text(text = stringResource(R.string.touch_customize_section_position))
                 PositionSliders(viewModel, touchControllerSettings)
 
-                if (controllerConfig.touchControllerID == TouchControllerID.NES) {
-                    HorizontalDivider()
-                    NESButtonSettings(viewModel, touchControllerSettings)
+                when (controllerConfig.touchControllerID) {
+                    TouchControllerID.NES -> {
+                        HorizontalDivider()
+                        NESButtonSettings(viewModel, touchControllerSettings)
+                    }
+
+                    TouchControllerID.ARCADE_4,
+                    TouchControllerID.ARCADE_6,
+                    -> {
+                        HorizontalDivider()
+                        ArcadeButtonSettings(
+                            viewModel,
+                            touchControllerSettings,
+                            controllerConfig.touchControllerID,
+                        )
+                    }
+
+                    else -> Unit
                 }
 
                 Row(
@@ -412,23 +427,96 @@ private fun NESButtonSettings(
     settings: TouchControllerSettingsManager.Settings,
 ) {
     Text(text = stringResource(R.string.touch_customize_section_nes_mapping))
-    NESButtonMappingRow(
+    ButtonMappingRow(
         stringResource(R.string.touch_customize_button_a_position),
         settings.faceButtonAAction,
+        NES_ACTIONS,
     ) { viewModel.updateTouchControllerSettings(settings.copy(faceButtonAAction = it)) }
-    NESButtonMappingRow(
+    ButtonMappingRow(
         stringResource(R.string.touch_customize_button_b_position),
         settings.faceButtonBAction,
+        NES_ACTIONS,
     ) { viewModel.updateTouchControllerSettings(settings.copy(faceButtonBAction = it)) }
-    NESButtonMappingRow(
+    ButtonMappingRow(
         stringResource(R.string.touch_customize_button_x_position),
         settings.faceButtonXAction,
+        NES_ACTIONS,
     ) { viewModel.updateTouchControllerSettings(settings.copy(faceButtonXAction = it)) }
-    NESButtonMappingRow(
+    ButtonMappingRow(
         stringResource(R.string.touch_customize_button_y_position),
         settings.faceButtonYAction,
+        NES_ACTIONS,
     ) { viewModel.updateTouchControllerSettings(settings.copy(faceButtonYAction = it)) }
 
+    SlideLatchAndTurboSettings(
+        viewModel = viewModel,
+        settings = settings,
+        slideLatchEnabled = settings.slideLatchEnabled,
+        onSlideLatchChanged = {
+            viewModel.updateTouchControllerSettings(settings.copy(slideLatchEnabled = it))
+        },
+    )
+}
+
+@Composable
+private fun ArcadeButtonSettings(
+    viewModel: BaseGameScreenViewModel,
+    settings: TouchControllerSettingsManager.Settings,
+    touchControllerID: TouchControllerID,
+) {
+    val actions = if (touchControllerID == TouchControllerID.ARCADE_6) ARCADE_6_ACTIONS else ARCADE_4_ACTIONS
+    Text(text = stringResource(R.string.touch_customize_section_arcade_mapping))
+    ButtonMappingRow(
+        stringResource(R.string.touch_customize_arcade_button_a),
+        settings.arcadeButtonAAction,
+        actions,
+    ) { viewModel.updateTouchControllerSettings(settings.copy(arcadeButtonAAction = it)) }
+    ButtonMappingRow(
+        stringResource(R.string.touch_customize_arcade_button_b),
+        settings.arcadeButtonBAction,
+        actions,
+    ) { viewModel.updateTouchControllerSettings(settings.copy(arcadeButtonBAction = it)) }
+    ButtonMappingRow(
+        stringResource(R.string.touch_customize_arcade_button_x),
+        settings.arcadeButtonXAction,
+        actions,
+    ) { viewModel.updateTouchControllerSettings(settings.copy(arcadeButtonXAction = it)) }
+    ButtonMappingRow(
+        stringResource(R.string.touch_customize_arcade_button_y),
+        settings.arcadeButtonYAction,
+        actions,
+    ) { viewModel.updateTouchControllerSettings(settings.copy(arcadeButtonYAction = it)) }
+
+    if (touchControllerID == TouchControllerID.ARCADE_6) {
+        ButtonMappingRow(
+            stringResource(R.string.touch_customize_arcade_button_l1),
+            settings.arcadeButtonL1Action,
+            actions,
+        ) { viewModel.updateTouchControllerSettings(settings.copy(arcadeButtonL1Action = it)) }
+        ButtonMappingRow(
+            stringResource(R.string.touch_customize_arcade_button_r1),
+            settings.arcadeButtonR1Action,
+            actions,
+        ) { viewModel.updateTouchControllerSettings(settings.copy(arcadeButtonR1Action = it)) }
+    }
+
+    SlideLatchAndTurboSettings(
+        viewModel = viewModel,
+        settings = settings,
+        slideLatchEnabled = settings.arcadeSlideLatchEnabled,
+        onSlideLatchChanged = {
+            viewModel.updateTouchControllerSettings(settings.copy(arcadeSlideLatchEnabled = it))
+        },
+    )
+}
+
+@Composable
+private fun SlideLatchAndTurboSettings(
+    viewModel: BaseGameScreenViewModel,
+    settings: TouchControllerSettingsManager.Settings,
+    slideLatchEnabled: Boolean,
+    onSlideLatchChanged: (Boolean) -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -439,10 +527,8 @@ private fun NESButtonSettings(
             Text(text = stringResource(R.string.touch_customize_slide_latch_summary))
         }
         Switch(
-            checked = settings.slideLatchEnabled,
-            onCheckedChange = {
-                viewModel.updateTouchControllerSettings(settings.copy(slideLatchEnabled = it))
-            },
+            checked = slideLatchEnabled,
+            onCheckedChange = onSlideLatchChanged,
         )
     }
 
@@ -454,8 +540,7 @@ private fun NESButtonSettings(
         Slider(
             value = settings.turboRateHz,
             valueRange =
-                TouchControllerSettingsManager.MIN_TURBO_RATE_HZ..
-                    TouchControllerSettingsManager.MAX_TURBO_RATE_HZ,
+                TouchControllerSettingsManager.MIN_TURBO_RATE_HZ..TouchControllerSettingsManager.MAX_TURBO_RATE_HZ,
             steps = 14,
             onValueChange = { viewModel.updateTouchControllerSettings(settings.copy(turboRateHz = it)) },
         )
@@ -463,9 +548,10 @@ private fun NESButtonSettings(
 }
 
 @Composable
-private fun NESButtonMappingRow(
+private fun ButtonMappingRow(
     buttonLabel: String,
     action: TouchControllerSettingsManager.FaceButtonAction,
+    actions: List<TouchControllerSettingsManager.FaceButtonAction>,
     onActionSelected: (TouchControllerSettingsManager.FaceButtonAction) -> Unit,
 ) {
     val expanded = remember { mutableStateOf(false) }
@@ -483,7 +569,7 @@ private fun NESButtonMappingRow(
                 expanded = expanded.value,
                 onDismissRequest = { expanded.value = false },
             ) {
-                TouchControllerSettingsManager.FaceButtonAction.entries.forEach { option ->
+                actions.forEach { option ->
                     DropdownMenuItem(
                         text = { Text(faceButtonActionLabel(option)) },
                         onClick = {
@@ -503,11 +589,48 @@ private fun faceButtonActionLabel(action: TouchControllerSettingsManager.FaceBut
         when (action) {
             TouchControllerSettingsManager.FaceButtonAction.TURBO_A -> R.string.touch_customize_action_turbo_a
             TouchControllerSettingsManager.FaceButtonAction.TURBO_B -> R.string.touch_customize_action_turbo_b
+            TouchControllerSettingsManager.FaceButtonAction.TURBO_X -> R.string.touch_customize_action_turbo_x
+            TouchControllerSettingsManager.FaceButtonAction.TURBO_Y -> R.string.touch_customize_action_turbo_y
+            TouchControllerSettingsManager.FaceButtonAction.TURBO_L1 -> R.string.touch_customize_action_turbo_l1
+            TouchControllerSettingsManager.FaceButtonAction.TURBO_R1 -> R.string.touch_customize_action_turbo_r1
             TouchControllerSettingsManager.FaceButtonAction.NORMAL_A -> R.string.touch_customize_action_normal_a
             TouchControllerSettingsManager.FaceButtonAction.NORMAL_B -> R.string.touch_customize_action_normal_b
+            TouchControllerSettingsManager.FaceButtonAction.NORMAL_X -> R.string.touch_customize_action_normal_x
+            TouchControllerSettingsManager.FaceButtonAction.NORMAL_Y -> R.string.touch_customize_action_normal_y
+            TouchControllerSettingsManager.FaceButtonAction.NORMAL_L1 -> R.string.touch_customize_action_normal_l1
+            TouchControllerSettingsManager.FaceButtonAction.NORMAL_R1 -> R.string.touch_customize_action_normal_r1
         },
     )
 }
+
+private val NES_ACTIONS =
+    listOf(
+        TouchControllerSettingsManager.FaceButtonAction.TURBO_A,
+        TouchControllerSettingsManager.FaceButtonAction.TURBO_B,
+        TouchControllerSettingsManager.FaceButtonAction.NORMAL_A,
+        TouchControllerSettingsManager.FaceButtonAction.NORMAL_B,
+    )
+
+private val ARCADE_4_ACTIONS =
+    listOf(
+        TouchControllerSettingsManager.FaceButtonAction.NORMAL_A,
+        TouchControllerSettingsManager.FaceButtonAction.NORMAL_B,
+        TouchControllerSettingsManager.FaceButtonAction.NORMAL_X,
+        TouchControllerSettingsManager.FaceButtonAction.NORMAL_Y,
+        TouchControllerSettingsManager.FaceButtonAction.TURBO_A,
+        TouchControllerSettingsManager.FaceButtonAction.TURBO_B,
+        TouchControllerSettingsManager.FaceButtonAction.TURBO_X,
+        TouchControllerSettingsManager.FaceButtonAction.TURBO_Y,
+    )
+
+private val ARCADE_6_ACTIONS =
+    ARCADE_4_ACTIONS +
+        listOf(
+            TouchControllerSettingsManager.FaceButtonAction.NORMAL_L1,
+            TouchControllerSettingsManager.FaceButtonAction.NORMAL_R1,
+            TouchControllerSettingsManager.FaceButtonAction.TURBO_L1,
+            TouchControllerSettingsManager.FaceButtonAction.TURBO_R1,
+        )
 
 @Composable
 private fun MenuEditTouchControlRow(

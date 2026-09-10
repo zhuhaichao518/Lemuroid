@@ -18,12 +18,6 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
         private val THUMB_REPLACE = Regex("[&*/:`<>?\\\\|]")
     }
 
-    private val sortedSystemIds: List<String> by lazy {
-        SystemID.values()
-            .map { it.dbname }
-            .sortedByDescending { it.length }
-    }
-
     override suspend fun retrieveMetadata(storageFile: StorageFile): GameMetadata? {
         val db = ovgdbManager.dbInstance
 
@@ -85,9 +79,14 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
 
     private fun findByPathAndSupportedExtension(file: StorageFile): GameMetadata? {
         val system =
-            sortedSystemIds
-                .filter { parentContainsSystem(file.path, it) }
-                .map { GameSystem.findById(it) }
+            GameSystem.all()
+                .sortedByDescending { system ->
+                    (listOf(system.id.dbname) + system.scanOptions.pathAliases).maxOf { it.length }
+                }
+                .filter { system ->
+                    (listOf(system.id.dbname) + system.scanOptions.pathAliases)
+                        .any { parentContainsSystem(file.path, it) }
+                }
                 .filter { it.scanOptions.scanByPathAndSupportedExtensions }
                 .firstOrNull { it.supportedExtensions.contains(file.extension) }
 

@@ -56,13 +56,21 @@ fun PadKitScope.Arcade6Right(
                 primaryAnchors = centralAnchors,
                 background = { },
                 applyPadding = false,
-                trackPointers = false,
+                trackPointers = true,
                 idsForegrounds =
                     persistentMapOf<Id.Key, @Composable (State<Boolean>) -> Unit>(
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_X) to { LemuroidCentralButton(pressedState = it) },
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_A) to { LemuroidCentralButton(pressedState = it) },
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_B) to { LemuroidCentralButton(pressedState = it) },
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y) to { LemuroidCentralButton(pressedState = it) },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X) to {
+                            LemuroidCentralButton(it, settings.arcadeButtonXAction.shortLabel())
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_A) to {
+                            LemuroidCentralButton(it, settings.arcadeButtonAAction.shortLabel())
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_B) to {
+                            LemuroidCentralButton(it, settings.arcadeButtonBAction.shortLabel())
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y) to {
+                            LemuroidCentralButton(it, settings.arcadeButtonYAction.shortLabel())
+                        },
                     ),
             )
         },
@@ -70,10 +78,12 @@ fun PadKitScope.Arcade6Right(
             LemuroidControlButton(
                 modifier = Modifier.radialPosition(90f),
                 id = Id.Key(KeyEvent.KEYCODE_BUTTON_L1),
+                label = settings.arcadeButtonL1Action.shortLabel(),
             )
             LemuroidControlButton(
                 modifier = Modifier.radialPosition(60f),
                 id = Id.Key(KeyEvent.KEYCODE_BUTTON_R1),
+                label = settings.arcadeButtonR1Action.shortLabel(),
             )
             SecondaryButtonMenu(settings)
         },

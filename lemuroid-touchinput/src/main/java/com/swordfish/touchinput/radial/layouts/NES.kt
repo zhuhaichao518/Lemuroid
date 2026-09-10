@@ -76,12 +76,3 @@ fun PadKitScope.NESRight(
         },
     )
 }
-
-private fun TouchControllerSettingsManager.FaceButtonAction.shortLabel(): String {
-    return when (this) {
-        TouchControllerSettingsManager.FaceButtonAction.TURBO_A -> "A连"
-        TouchControllerSettingsManager.FaceButtonAction.TURBO_B -> "B连"
-        TouchControllerSettingsManager.FaceButtonAction.NORMAL_A -> "A"
-        TouchControllerSettingsManager.FaceButtonAction.NORMAL_B -> "B"
-    }
-}

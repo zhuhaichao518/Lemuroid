@@ -24,7 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -33,6 +32,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -90,7 +90,7 @@ class GameViewModelTouchControls(
             }
             .onEach { settings ->
                 activeTouchSettings = settings
-                if (!settings.slideLatchEnabled) firstFaceButton = null
+                if (!isSlideLatchEnabled()) firstFaceButton = null
                 refreshFaceButtonOutput()
             }
     }
@@ -140,18 +140,15 @@ class GameViewModelTouchControls(
             onMenuPressed((menuEvent as InputEvent.Button).pressed)
         }
 
-        val nesFaceButtonEvents =
-            if (touchControlId.value == TouchControllerID.NES) {
-                events.filterIsInstance<InputEvent.Button>().filter { it.id in NES_FACE_BUTTON_IDS }
-            } else {
-                emptyList()
-            }
+        val configurableFaceButtonIds = configurableFaceButtonIds()
+        val configurableFaceButtonEvents =
+            events.filterIsInstance<InputEvent.Button>().filter { it.id in configurableFaceButtonIds }
 
-        if (nesFaceButtonEvents.isNotEmpty()) {
-            handleNESFaceButtonEvents(nesFaceButtonEvents)
+        if (configurableFaceButtonEvents.isNotEmpty()) {
+            handleFaceButtonEvents(configurableFaceButtonEvents)
         }
 
-        events.filterNot { it is InputEvent.Button && it in nesFaceButtonEvents }.forEach { event ->
+        events.filterNot { it is InputEvent.Button && it in configurableFaceButtonEvents }.forEach { event ->
             when (event) {
                 is InputEvent.Button -> {
                     handleVirtualInputButton(event)
@@ -168,9 +165,9 @@ class GameViewModelTouchControls(
         }
     }
 
-    private fun handleNESFaceButtonEvents(events: List<InputEvent.Button>) {
+    private fun handleFaceButtonEvents(events: List<InputEvent.Button>) {
         if (
-            activeTouchSettings.slideLatchEnabled &&
+            isSlideLatchEnabled() &&
             pressedFaceButtons.isEmpty() &&
             firstFaceButton == null
         ) {
@@ -195,10 +192,10 @@ class GameViewModelTouchControls(
     }
 
     private fun refreshFaceButtonOutput() {
-        if (touchControlId.value != TouchControllerID.NES) return
+        if (touchControlId.value !in CONFIGURABLE_FACE_BUTTON_CONTROLLERS) return
 
         val effectiveButtons =
-            if (activeTouchSettings.slideLatchEnabled) {
+            if (isSlideLatchEnabled()) {
                 pressedFaceButtons + listOfNotNull(firstFaceButton)
             } else {
                 pressedFaceButtons
@@ -214,11 +211,35 @@ class GameViewModelTouchControls(
                 TouchControllerSettingsManager.FaceButtonAction.NORMAL_B ->
                     requestedNormalKeys += KeyEvent.KEYCODE_BUTTON_B
 
+                TouchControllerSettingsManager.FaceButtonAction.NORMAL_X ->
+                    requestedNormalKeys += KeyEvent.KEYCODE_BUTTON_X
+
+                TouchControllerSettingsManager.FaceButtonAction.NORMAL_Y ->
+                    requestedNormalKeys += KeyEvent.KEYCODE_BUTTON_Y
+
+                TouchControllerSettingsManager.FaceButtonAction.NORMAL_L1 ->
+                    requestedNormalKeys += KeyEvent.KEYCODE_BUTTON_L1
+
+                TouchControllerSettingsManager.FaceButtonAction.NORMAL_R1 ->
+                    requestedNormalKeys += KeyEvent.KEYCODE_BUTTON_R1
+
                 TouchControllerSettingsManager.FaceButtonAction.TURBO_A ->
                     requestedTurboKeys += KeyEvent.KEYCODE_BUTTON_A
 
                 TouchControllerSettingsManager.FaceButtonAction.TURBO_B ->
                     requestedTurboKeys += KeyEvent.KEYCODE_BUTTON_B
+
+                TouchControllerSettingsManager.FaceButtonAction.TURBO_X ->
+                    requestedTurboKeys += KeyEvent.KEYCODE_BUTTON_X
+
+                TouchControllerSettingsManager.FaceButtonAction.TURBO_Y ->
+                    requestedTurboKeys += KeyEvent.KEYCODE_BUTTON_Y
+
+                TouchControllerSettingsManager.FaceButtonAction.TURBO_L1 ->
+                    requestedTurboKeys += KeyEvent.KEYCODE_BUTTON_L1
+
+                TouchControllerSettingsManager.FaceButtonAction.TURBO_R1 ->
+                    requestedTurboKeys += KeyEvent.KEYCODE_BUTTON_R1
             }
         }
 
@@ -227,19 +248,66 @@ class GameViewModelTouchControls(
         turboFaceKeys.clear()
         turboFaceKeys.addAll(requestedTurboKeys)
 
-        NES_LOGICAL_BUTTON_IDS.forEach { keyCode ->
+        configurableLogicalButtonIds().forEach { keyCode ->
             updateTurboJob(keyCode, keyCode in turboFaceKeys)
             emitFaceKeyIfChanged(keyCode)
         }
     }
 
     private fun faceButtonAction(physicalButton: Int): TouchControllerSettingsManager.FaceButtonAction {
-        return when (physicalButton) {
-            KeyEvent.KEYCODE_BUTTON_A -> activeTouchSettings.faceButtonAAction
-            KeyEvent.KEYCODE_BUTTON_B -> activeTouchSettings.faceButtonBAction
-            KeyEvent.KEYCODE_BUTTON_X -> activeTouchSettings.faceButtonXAction
-            KeyEvent.KEYCODE_BUTTON_Y -> activeTouchSettings.faceButtonYAction
-            else -> error("Unsupported NES face button: $physicalButton")
+        return when (touchControlId.value) {
+            TouchControllerID.NES ->
+                when (physicalButton) {
+                    KeyEvent.KEYCODE_BUTTON_A -> activeTouchSettings.faceButtonAAction
+                    KeyEvent.KEYCODE_BUTTON_B -> activeTouchSettings.faceButtonBAction
+                    KeyEvent.KEYCODE_BUTTON_X -> activeTouchSettings.faceButtonXAction
+                    KeyEvent.KEYCODE_BUTTON_Y -> activeTouchSettings.faceButtonYAction
+                    else -> error("Unsupported NES face button: $physicalButton")
+                }
+
+            TouchControllerID.ARCADE_4,
+            TouchControllerID.ARCADE_6,
+            ->
+                when (physicalButton) {
+                    KeyEvent.KEYCODE_BUTTON_A -> activeTouchSettings.arcadeButtonAAction
+                    KeyEvent.KEYCODE_BUTTON_B -> activeTouchSettings.arcadeButtonBAction
+                    KeyEvent.KEYCODE_BUTTON_X -> activeTouchSettings.arcadeButtonXAction
+                    KeyEvent.KEYCODE_BUTTON_Y -> activeTouchSettings.arcadeButtonYAction
+                    KeyEvent.KEYCODE_BUTTON_L1 -> activeTouchSettings.arcadeButtonL1Action
+                    KeyEvent.KEYCODE_BUTTON_R1 -> activeTouchSettings.arcadeButtonR1Action
+                    else -> error("Unsupported arcade face button: $physicalButton")
+                }
+
+            else -> error("Unsupported configurable controller: ${touchControlId.value}")
+        }
+    }
+
+    private fun isSlideLatchEnabled(): Boolean {
+        return when (touchControlId.value) {
+            TouchControllerID.NES -> activeTouchSettings.slideLatchEnabled
+            TouchControllerID.ARCADE_4,
+            TouchControllerID.ARCADE_6,
+            -> activeTouchSettings.arcadeSlideLatchEnabled
+            else -> false
+        }
+    }
+
+    private fun configurableFaceButtonIds(): Set<Int> {
+        return when (touchControlId.value) {
+            TouchControllerID.NES,
+            TouchControllerID.ARCADE_4,
+            -> FOUR_FACE_BUTTON_IDS
+            TouchControllerID.ARCADE_6 -> SIX_FACE_BUTTON_IDS
+            else -> emptySet()
+        }
+    }
+
+    private fun configurableLogicalButtonIds(): Set<Int> {
+        return when (touchControlId.value) {
+            TouchControllerID.NES -> NES_LOGICAL_BUTTON_IDS
+            TouchControllerID.ARCADE_4 -> FOUR_FACE_BUTTON_IDS
+            TouchControllerID.ARCADE_6 -> SIX_FACE_BUTTON_IDS
+            else -> emptySet()
         }
     }
 
@@ -384,13 +452,25 @@ class GameViewModelTouchControls(
     companion object {
         const val MENU_LOADING_ANIMATION_MILLIS = 500
 
-        private val NES_FACE_BUTTON_IDS =
+        private val CONFIGURABLE_FACE_BUTTON_CONTROLLERS =
+            setOf(
+                TouchControllerID.NES,
+                TouchControllerID.ARCADE_4,
+                TouchControllerID.ARCADE_6,
+            )
+        private val FOUR_FACE_BUTTON_IDS =
             setOf(
                 KeyEvent.KEYCODE_BUTTON_A,
                 KeyEvent.KEYCODE_BUTTON_B,
                 KeyEvent.KEYCODE_BUTTON_X,
                 KeyEvent.KEYCODE_BUTTON_Y,
             )
+        private val SIX_FACE_BUTTON_IDS =
+            FOUR_FACE_BUTTON_IDS +
+                setOf(
+                    KeyEvent.KEYCODE_BUTTON_L1,
+                    KeyEvent.KEYCODE_BUTTON_R1,
+                )
         private val NES_LOGICAL_BUTTON_IDS =
             setOf(
                 KeyEvent.KEYCODE_BUTTON_A,
