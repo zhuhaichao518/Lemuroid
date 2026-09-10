@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="touch_customize_left_stick">Left directional control</string>
+    <string name="touch_customize_left_stick_original">Original control</string>
+    <string name="touch_customize_left_stick_touch_down">CloudPlayPlus · Touch-down center</string>
+    <string name="touch_customize_left_stick_fixed">CloudPlayPlus · Fixed center</string>
+    <string name="touch_customize_left_stick_summary">The center stays fixed throughout each gesture. Half-moon feedback shows direction. Digital systems use eight directions; analog systems preserve strength.</string>
+    <string name="touch_customize_left_stick_half_screen">Start anywhere in the left half (buttons take priority)</string>
+    <string name="touch_customize_left_stick_feedback">Show an extra position indicator above the stick</string>
+    <string name="touch_customize_left_stick_auto_run">Hold upward movement after release</string>
+    <string name="touch_customize_left_stick_auto_run_summary">Push up to the running icon and release to keep moving up. Touch the stick area again to stop. This does not send a sprint button.</string>
     <string name="touch_customize_button_done">Done</string>
     <string name="touch_customize_button_reset">Reset</string>
     <string name="touch_customize_info">Drag and Pinch controls to change position and size</string>

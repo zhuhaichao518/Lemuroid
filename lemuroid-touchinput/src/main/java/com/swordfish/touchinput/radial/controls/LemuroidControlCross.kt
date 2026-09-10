@@ -29,8 +29,13 @@ fun LemuroidControlCross(
     },
 ) {
     val theme = LocalLemuroidPadTheme.current
+    val cloudStick = LocalCloudStickController.current
+    if (LocalCloudStickEligible.current && cloudStick?.replacesDirection(id.value, continuous = false) == true) {
+        CloudStickAnchor(modifier.padding(theme.padding), cloudStick, id.value, allowDiagonals)
+        return
+    }
     ControlCross(
-        modifier = modifier.padding(theme.padding),
+        modifier = modifier.padding(theme.padding).cloudStickExclusion(),
         id = id,
         allowDiagonals = allowDiagonals,
         background = background,

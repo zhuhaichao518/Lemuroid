@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="touch_customize_left_stick">左侧方向控制</string>
+    <string name="touch_customize_left_stick_original">原版方向控制</string>
+    <string name="touch_customize_left_stick_touch_down">CloudPlayPlus · 按下位置为中心</string>
+    <string name="touch_customize_left_stick_fixed">CloudPlayPlus · 原摇杆中心</string>
+    <string name="touch_customize_left_stick_summary">一次拖动中中心固定，半月提示方向。FC、街机等按八方向输出，模拟摇杆保留力度。</string>
+    <string name="touch_customize_left_stick_half_screen">左半屏触发（原有按钮优先）</string>
+    <string name="touch_customize_left_stick_feedback">在摇杆上方显示额外位置提示</string>
+    <string name="touch_customize_left_stick_auto_run">松手保持向上移动</string>
+    <string name="touch_customize_left_stick_auto_run_summary">上推到奔跑图标后松手，保持向上；再次触碰摇杆区域停止。仅保持方向，不额外按冲刺键。</string>
     <string name="touch_customize_button_done">完成</string>
     <string name="touch_customize_button_reset">复位</string>
     <string name="touch_customize_info">拖动和缩放来改变按键位置和大小</string>

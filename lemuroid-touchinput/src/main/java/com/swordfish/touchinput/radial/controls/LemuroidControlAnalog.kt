@@ -21,8 +21,13 @@ fun LemuroidControlAnalog(
     id: Id.ContinuousDirection,
 ) {
     val theme = LocalLemuroidPadTheme.current
+    val cloudStick = LocalCloudStickController.current
+    if (LocalCloudStickEligible.current && cloudStick?.replacesDirection(id.value, continuous = true) == true) {
+        CloudStickAnchor(modifier.padding(theme.padding), cloudStick, id.value, true)
+        return
+    }
     Box(
-        modifier = modifier.padding(theme.padding),
+        modifier = modifier.padding(theme.padding).cloudStickExclusion(),
         contentAlignment = Alignment.Center,
     ) {
         ControlAnalog(

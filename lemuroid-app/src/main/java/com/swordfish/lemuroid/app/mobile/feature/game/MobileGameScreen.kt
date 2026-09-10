@@ -36,7 +36,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +66,9 @@ import com.swordfish.lemuroid.lib.controller.ControllerConfig
 import com.swordfish.touchinput.controller.R
 import com.swordfish.touchinput.radial.LemuroidPadTheme
 import com.swordfish.touchinput.radial.LocalLemuroidPadTheme
+import com.swordfish.touchinput.radial.controls.CloudStickController
+import com.swordfish.touchinput.radial.controls.CloudStickOverlay
+import com.swordfish.touchinput.radial.controls.LocalCloudStickController
 import com.swordfish.touchinput.radial.sensors.TiltConfiguration
 import com.swordfish.touchinput.radial.settings.TouchControllerID
 import com.swordfish.touchinput.radial.settings.TouchControllerSettingsManager
@@ -75,7 +80,10 @@ import gg.padkit.inputstate.InputState
 import kotlin.math.roundToInt
 
 @Composable
-fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
+fun MobileGameScreen(
+    viewModel: BaseGameScreenViewModel,
+    cloudStickController: CloudStickController,
+) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isLandscape = constraints.maxWidth > constraints.maxHeight
 
@@ -98,6 +106,30 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         val touchControllerSettings = touchControllerSettingsState.value
         val currentControllerConfig = controllerConfigState.value
+        val editingControls = viewModel.isEditControlShown().collectAsState(false).value
+        val loading = viewModel.loadingState.collectAsState(true).value
+        val density = LocalDensity.current.density
+        val hasAnalogLeft =
+            currentControllerConfig?.touchControllerID in
+                setOf(
+                    TouchControllerID.N64,
+                    TouchControllerID.PSP,
+                    TouchControllerID.PSX_DUALSHOCK,
+                    TouchControllerID.NINTENDO_3DS,
+                )
+        SideEffect {
+            cloudStickController.configure(
+                touchControllerSettings ?: TouchControllerSettingsManager.Settings(),
+                enabled =
+                    touchControllerSettings != null && touchControlsVisibleState.value && !editingControls && !loading,
+                analog = hasAnalogLeft,
+                density = density,
+                onInput = viewModel::handleVirtualInputEvent,
+            )
+        }
+        DisposableEffect(cloudStickController) {
+            onDispose { cloudStickController.cancel() }
+        }
 
         val tiltConfiguration = viewModel.getTiltConfiguration().collectAsState(TiltConfiguration.Disabled)
         val tiltSimulatedStates = viewModel.getSimulatedTiltEvents().collectAsState(InputState())
@@ -180,7 +212,10 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                         touchControlsVisibleState.value
 
                 if (isVisible) {
-                    CompositionLocalProvider(LocalLemuroidPadTheme provides LemuroidPadTheme()) {
+                    CompositionLocalProvider(
+                        LocalLemuroidPadTheme provides LemuroidPadTheme(),
+                        LocalCloudStickController provides cloudStickController,
+                    ) {
                         if (!isLandscape) {
                             PadContainer(
                                 modifier = Modifier.layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER),
@@ -216,12 +251,11 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             }
         }
 
-        val isLoading =
-            viewModel.loadingState
-                .collectAsState(true)
-                .value
+        if (touchControlsVisibleState.value && touchControllerSettings != null) {
+            CloudStickOverlay(cloudStickController)
+        }
 
-        if (isLoading) {
+        if (loading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
@@ -328,6 +362,9 @@ private fun MenuEditTouchControls(
                 Text(text = stringResource(R.string.touch_customize_section_position))
                 PositionSliders(viewModel, touchControllerSettings)
 
+                HorizontalDivider()
+                LeftStickSettings(viewModel, touchControllerSettings)
+
                 when (controllerConfig.touchControllerID) {
                     TouchControllerID.NES -> {
                         HorizontalDivider()
@@ -369,6 +406,72 @@ private fun MenuEditTouchControls(
         }
     }
 }
+
+@Composable
+private fun LeftStickSettings(
+    viewModel: BaseGameScreenViewModel,
+    settings: TouchControllerSettingsManager.Settings,
+) {
+    Text(stringResource(R.string.touch_customize_left_stick))
+    val expanded = remember { mutableStateOf(false) }
+    Box {
+        OutlinedButton(onClick = { expanded.value = true }) {
+            Text(leftStickModeLabel(settings.leftStickMode))
+        }
+        DropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = false }) {
+            TouchControllerSettingsManager.LeftStickMode.entries.forEach { mode ->
+                DropdownMenuItem(
+                    text = { Text(leftStickModeLabel(mode)) },
+                    onClick = {
+                        expanded.value = false
+                        viewModel.updateTouchControllerSettings(settings.copy(leftStickMode = mode))
+                    },
+                )
+            }
+        }
+    }
+    if (settings.leftStickMode != TouchControllerSettingsManager.LeftStickMode.ORIGINAL) {
+        Text(stringResource(R.string.touch_customize_left_stick_summary))
+        LeftStickSwitch(stringResource(R.string.touch_customize_left_stick_half_screen), settings.leftStickHalfScreen) {
+            viewModel.updateTouchControllerSettings(settings.copy(leftStickHalfScreen = it))
+        }
+        if (settings.leftStickMode == TouchControllerSettingsManager.LeftStickMode.CLOUD_FIXED) {
+            LeftStickSwitch(
+                stringResource(R.string.touch_customize_left_stick_feedback),
+                settings.leftStickPositionFeedback,
+            ) {
+                viewModel.updateTouchControllerSettings(settings.copy(leftStickPositionFeedback = it))
+            }
+        }
+        LeftStickSwitch(stringResource(R.string.touch_customize_left_stick_auto_run), settings.leftStickAutoRun) {
+            viewModel.updateTouchControllerSettings(settings.copy(leftStickAutoRun = it))
+        }
+        Text(stringResource(R.string.touch_customize_left_stick_auto_run_summary))
+    }
+}
+
+@Composable
+private fun LeftStickSwitch(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun leftStickModeLabel(mode: TouchControllerSettingsManager.LeftStickMode): String =
+    stringResource(
+        when (mode) {
+            TouchControllerSettingsManager.LeftStickMode.ORIGINAL -> R.string.touch_customize_left_stick_original
+            TouchControllerSettingsManager.LeftStickMode.CLOUD_TOUCH_DOWN ->
+                R.string.touch_customize_left_stick_touch_down
+            TouchControllerSettingsManager.LeftStickMode.CLOUD_FIXED -> R.string.touch_customize_left_stick_fixed
+        },
+    )
 
 @Composable
 private fun PositionSliders(

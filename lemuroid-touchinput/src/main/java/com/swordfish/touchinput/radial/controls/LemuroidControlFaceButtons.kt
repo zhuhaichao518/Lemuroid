@@ -31,7 +31,8 @@ fun LemuroidControlFaceButtons(
     ControlFaceButtons(
         modifier =
             modifier
-                .run { if (applyPadding) padding(theme.padding) else modifier },
+                .run { if (applyPadding) padding(theme.padding) else modifier }
+                .cloudStickExclusion(),
         includeComposite = includeComposite,
         ids = ids,
         trackPointers = trackPointers,
@@ -56,7 +57,8 @@ fun LemuroidControlFaceButtons(
     ControlFaceButtons(
         modifier =
             modifier
-                .run { if (applyPadding) padding(theme.padding) else modifier },
+                .run { if (applyPadding) padding(theme.padding) else modifier }
+                .cloudStickExclusion(),
         primaryAnchors = primaryAnchors,
         compositeAnchors = persistentListOf(),
         trackPointers = trackPointers,

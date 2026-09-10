@@ -8,6 +8,9 @@ plugins {
 }
 
 android {
+    defaultConfig {
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
     kotlinOptions {
         jvmTarget = "17"
         freeCompilerArgs +=
@@ -27,6 +30,8 @@ android {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
     implementation(project(":retrograde-util"))
 
     implementation(platform(deps.libs.androidx.compose.composeBom))

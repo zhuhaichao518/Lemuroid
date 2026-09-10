@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.swordfish.touchinput.radial.LocalLemuroidPadTheme
+import com.swordfish.touchinput.radial.controls.LocalCloudStickEligible
 import com.swordfish.touchinput.radial.settings.TouchControllerSettingsManager
 import gg.padkit.PadKitScope
 import gg.padkit.layouts.radial.LayoutRadial
@@ -43,8 +45,12 @@ fun BaseLayoutLeft(
                     bottom = TouchControllerSettingsManager.MAX_MARGINS.dp * settings.marginY,
                 )
                 .padding(LocalLemuroidPadTheme.current.padding),
-        primaryDial = primaryDial,
-        secondaryDials = secondaryDials,
+        primaryDial = {
+            CompositionLocalProvider(LocalCloudStickEligible provides true) { primaryDial() }
+        },
+        secondaryDials = {
+            CompositionLocalProvider(LocalCloudStickEligible provides true) { secondaryDials() }
+        },
         primaryDialMaxSize = 160.dp * interpolatedDialSize,
         secondaryDialsBaseRotationInDegrees = settings.rotation * TouchControllerSettingsManager.MAX_ROTATION,
     )

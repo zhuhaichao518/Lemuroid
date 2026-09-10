@@ -40,6 +40,13 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
     }
 
     @Serializable
+    enum class LeftStickMode {
+        ORIGINAL,
+        CLOUD_TOUCH_DOWN,
+        CLOUD_FIXED,
+    }
+
+    @Serializable
     data class Settings(
         val scale: Float = DEFAULT_SCALE,
         val rotation: Float = DEFAULT_ROTATION,
@@ -62,6 +69,10 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         val arcadeButtonR1Action: FaceButtonAction = FaceButtonAction.NORMAL_R1,
         val arcadeSlideLatchEnabled: Boolean = false,
         val turboRateHz: Float = DEFAULT_TURBO_RATE_HZ,
+        val leftStickMode: LeftStickMode = LeftStickMode.ORIGINAL,
+        val leftStickHalfScreen: Boolean = true,
+        val leftStickPositionFeedback: Boolean = true,
+        val leftStickAutoRun: Boolean = true,
     )
 
     private fun computeInsetsPaddings(

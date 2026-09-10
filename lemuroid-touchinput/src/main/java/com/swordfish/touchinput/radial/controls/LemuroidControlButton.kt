@@ -21,7 +21,7 @@ fun LemuroidControlButton(
 ) {
     val theme = LocalLemuroidPadTheme.current
     ControlButton(
-        modifier = modifier.padding(theme.padding),
+        modifier = modifier.padding(theme.padding).cloudStickExclusion(),
         id = id,
         foreground = { LemuroidButtonForeground(pressed = it, icon = icon, label = label) },
         background = { LemuroidControlBackground() },
